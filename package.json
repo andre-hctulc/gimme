@@ -6,7 +6,8 @@
     "scripts": {
         "build": "tsc",
         "tc": "tsc --noEmit",
-        "test": "jest"
+        "test": "jest",
+        "test:verbose": "jest --silent=false"
     },
     "author": "André Thomas",
     "license": "ISC",

@@ -20,8 +20,8 @@ abstract class Gimme<T> {
     protected _null = false;
     protected _undefined = false;
     protected _default: T | undefined;
-    private _or: Gimme<any>[] | undefined;
-    private _o_and: Gimme<any>[] | undefined;
+    private _or: Gimme<any>[] = [];
+    private _and: Gimme<any>[] = [];
 
     protected abstract val(data: any): boolean;
 
@@ -36,9 +36,27 @@ abstract class Gimme<T> {
     }
 
     validate(data: any): data is T {
-        if (this._undefined && data === undefined) return true;
-        if (this._null && data === null) return true;
-        return this.val(data);
+        let me = (this._undefined && data === undefined) || (this._null && data === null) || this.val(data);
+
+        if (this._and.length) {
+            if (!me) return false;
+
+            for (const and of this._and) {
+                if (!and.validate(data)) return false;
+            }
+        }
+
+        if (!me && this._or.length) {
+            console.log("Hier", this._or);
+            for (const or of this._or) {
+                if (or.validate(data)) {
+                    me = true;
+                    break;
+                }
+            }
+        }
+
+        return me;
     }
 
     default(value: T) {
@@ -47,7 +65,12 @@ abstract class Gimme<T> {
     }
 
     or(...gimmes: Gimme<any>[]) {
-        this._or?.push(...gimmes);
+        this._or.push(...gimmes);
+        return this;
+    }
+
+    and(...gimmes: Gimme<any>[]) {
+        this._and.push(...gimmes);
         return this;
     }
 }
@@ -149,7 +172,7 @@ export class GimmeObject<T extends object> extends Gimme<T> {
 
     protected val(data: any): boolean {
         if (typeof data !== "object" || data === null) return false;
-        if (this._primitive && Object(data) === data) return false;
+        if (this._primitive && data.constructor !== Object) return false;
         if (this._date) {
             if (!(data instanceof Date)) return false;
             if (this._minDate && data < this._minDate) return false;
