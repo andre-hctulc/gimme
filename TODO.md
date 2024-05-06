@@ -1,0 +1,1 @@
+- Array auto types when using items constructor

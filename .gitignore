@@ -1,2 +1,5 @@
 node_modules
 .DS_Store
+*.js
+!babel.config.js
+*.code-workspace

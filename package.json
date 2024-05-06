@@ -1,11 +1,18 @@
 {
-  "name": "obj-val",
-  "version": "0.0.1",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "André Thomas",
-  "license": "ISC"
+    "name": "@andre-hctulc/gimme",
+    "version": "0.0.1",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "build": "tsc",
+        "tc": "tsc --noEmit",
+        "test": "jest"
+    },
+    "author": "André Thomas",
+    "license": "ISC",
+    "devDependencies": {
+        "@babel/preset-typescript": "^7.24.1",
+        "@types/jest": "^29.5.12",
+        "jest": "^29.7.0"
+    }
 }
