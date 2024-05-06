@@ -1,3 +1,10 @@
 # gimme
 
-Validates objects, such as form data.
+Schema builder with 0 dependencies.
+
+## Alternatives
+
+-   Yup
+-   Zod
+-   Joi
+-   Valibot
