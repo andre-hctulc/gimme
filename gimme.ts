@@ -1,3 +1,5 @@
+import { GimmeError } from "./error";
+
 export type InferGimme<T> = T extends string
     ? GimmeString
     : T extends number
@@ -16,52 +18,90 @@ export type InferGimme<T> = T extends string
 
 export type InferType<T extends Gimme<any>> = T extends Gimme<infer U> ? U : never;
 
-abstract class Gimme<T> {
-    protected _null = false;
-    protected _undefined = false;
-    protected _default: T | undefined;
-    private _or: Gimme<any>[] = [];
-    private _and: Gimme<any>[] = [];
+/**
+ * @throws GimmeError
+ */
+type Refine<T> = (data: T, coerce: boolean, abort: (ok: boolean) => void) => T;
 
-    protected abstract val(data: any): boolean;
+function deepCopy<T>(obj: T): T {
+    if (obj === null) return null as T;
+    if (typeof obj !== "object") return obj as T;
+
+    // Create an array or object to hold the values
+    const copy = Array.isArray(obj) ? [] : {};
+
+    for (var key in obj) {
+        // Ensure key is not from prototype
+        if (obj.hasOwnProperty(key)) {
+            // Recursively copy for nested objects and arrays
+            (copy as any)[key] = deepCopy(obj[key]);
+        }
+    }
+
+    return copy as any;
+}
+
+abstract class Gimme<T> {
+    private _refines: Refine<T>[] = [];
+
+    refine(refiner: Refine<T>, eager = false) {
+        if (eager) this._refines.unshift(refiner);
+        else this._refines.push(refiner);
+        return this;
+    }
+
+    validate(data: any): GimmeError[] {
+        const errs: GimmeError[] = [];
+        for (const refine of this._refines) {
+            try {
+                const result = refine(data, false, (ok) => {
+                    if (!ok) throw new GimmeError(data, "Refine failed", true);
+                });
+            } catch (err) {
+                if (err instanceof GimmeError) errs.push(err);
+                else errs.push(new GimmeError(err, "Refine failed", true));
+            }
+        }
+        return errs;
+    }
+
+    parse(data: unknown): T {
+        const errors = this.validate(data);
+        if (errors.length) throw new GimmeError(errors, "Parse failed", true);
+        else return data as T;
+    }
+
+    coerce(data: unknown): T {
+        const errors = this.validate(data);
+        if (errors.length) throw new GimmeError(errors, "Coercion failed", true);
+        else return this.coerceData(data);
+    }
+
+    parseSafe(data: unknown): { data: T; errors: null } | { data: undefined; errors: GimmeError[] } {
+        const errors = this.validate(data);
+        if (errors.length) return { data: undefined, errors };
+        else return { data: this.parseData(data as T), errors: null };
+    }
+
+    ok(data: any) {
+        const errs = this.validate(data);
+        return !errs.length;
+    }
 
     nullable() {
-        this._null = true;
-        return this;
+        return this.refine((data, abort) => {
+            if (data === null) abort(true);
+            return data;
+        });
     }
 
-    allowUndefined() {
-        this._undefined = true;
+    optional() {
+        this._optional = true;
         return this;
-    }
-
-    validate(data: any): data is T {
-        let me = (this._undefined && data === undefined) || (this._null && data === null) || this.val(data);
-
-        if (this._and.length) {
-            if (!me) return false;
-
-            for (const and of this._and) {
-                if (!and.validate(data)) return false;
-            }
-        }
-
-        if (!me && this._or.length) {
-            console.log("Hier", this._or);
-            for (const or of this._or) {
-                if (or.validate(data)) {
-                    me = true;
-                    break;
-                }
-            }
-        }
-
-        return me;
     }
 
     default(value: T) {
-        this._default = value;
-        return this;
+        return this.refine((data) => (data === undefined ? value : data));
     }
 
     or(...gimmes: Gimme<any>[]) {
@@ -80,17 +120,19 @@ export class GimmeString extends Gimme<string> {
     private _minLen: number | undefined;
     private _maxLen: number | undefined;
     private _values: Set<string> | undefined;
+    private _forbid: string | undefined;
 
     constructor() {
         super();
     }
 
-    protected val(data: any): boolean {
+    protected validateData(data: any): boolean {
         if (typeof data !== "string") return false;
         if (this._regex && !this._regex.test(data)) return false;
         if (this._minLen && data.length < this._minLen) return false;
         if (this._maxLen && data.length > this._maxLen) return false;
         if (this._values && !this._values?.has(data)) return false;
+        if (this._forbid && data.includes(this._forbid)) return false;
         return true;
     }
 
@@ -113,6 +155,11 @@ export class GimmeString extends Gimme<string> {
         this._values = new Set(values.flat());
         return this;
     }
+
+    forbid(substr: string) {
+        this._forbid = substr;
+        return this;
+    }
 }
 
 export class GimmeNumber extends Gimme<number> {
@@ -124,7 +171,7 @@ export class GimmeNumber extends Gimme<number> {
         super();
     }
 
-    protected val(data: any): boolean {
+    protected validateData(data: any): boolean {
         if (typeof data !== "number") return false;
         if (this._min && data < this._min) return false;
         if (this._max && data > this._max) return false;
@@ -153,7 +200,7 @@ export class GimmeBool extends Gimme<boolean> {
         super();
     }
 
-    protected val(data: any): boolean {
+    protected validateData(data: any): boolean {
         return typeof data === "boolean";
     }
 }
@@ -170,7 +217,7 @@ export class GimmeObject<T extends object> extends Gimme<T> {
         this._props = props;
     }
 
-    protected val(data: any): boolean {
+    protected validateData(data: any): boolean {
         if (typeof data !== "object" || data === null) return false;
         if (this._primitive && data.constructor !== Object) return false;
         if (this._date) {
@@ -220,7 +267,7 @@ export class GimmeArray<T extends any[]> extends Gimme<T> {
         this._items = items;
     }
 
-    protected val(data: any): boolean {
+    protected validateData(data: any): boolean {
         if (!Array.isArray(data)) return false;
         if (this._items) {
             for (const item of data) {
@@ -243,7 +290,7 @@ export class GimmeFunc extends Gimme<Function> {
         super();
     }
 
-    protected val(data: any): boolean {
+    protected validateData(data: any): boolean {
         if (typeof data !== "function") return false;
         if (this._primitive && !!data.prototype && !!data.prototype.constructor.name) return false;
         return true;
@@ -260,7 +307,7 @@ export class GimmeSymbol extends Gimme<symbol> {
         super();
     }
 
-    protected val(data: any): boolean {
+    protected validateData(data: any): boolean {
         return typeof data === "symbol";
     }
 }
@@ -270,7 +317,7 @@ export class GimmeAny extends Gimme<any> {
         super();
     }
 
-    protected val(data: any): boolean {
+    protected validateData(data: any): boolean {
         return true;
     }
 }
