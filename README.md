@@ -1,10 +1,7 @@
 # gimme
 
-Schema builder with 0 dependencies.
+Schema validation library inspired from [zod](https://zod.dev/).
 
-## Alternatives
+## bugs
 
--   Yup
--   Zod
--   Joi
--   Valibot
+-   refines in constructors already copy instances

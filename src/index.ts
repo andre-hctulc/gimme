@@ -26,9 +26,8 @@ namespace gimme {
     export const str = () => new GimmeString();
     export const num = () => new GimmeNumber();
     export const bool = () => new GimmeBool();
-    export const obj = <T extends object>(props: { [K in keyof T]: Gimme<T[K]> }) =>
-        new GimmeObject<T>(props);
-    export const arr = <T extends any[]>(items: Gimme<T[number]>) => new GimmeArray<T>(items);
+    export const obj = <T extends Record<string, Gimme<any>>>(props: T) => new GimmeObject(props);
+    export const arr = <T extends Gimme<any>>(items: T) => new GimmeArray<T>(items);
     export const func = () => new GimmeFunc();
     export const any = () => new GimmeAny();
     export const sym = () => new GimmeSymbol();

@@ -1,6 +1,11 @@
 import { GimmeError, GimmeTypeError } from "./error";
 
-export type InferType<T extends Gimme<any>> = T extends Gimme<infer U> ? U : never;
+type ApplyNullable<T, N extends boolean> = N extends true ? T | null : T;
+type ApplyOptional<T, O extends boolean> = O extends true ? T | undefined : T;
+
+export type InferType<T extends Gimme<any>> = T extends Gimme<infer M, any, infer O, infer N>
+    ? ApplyNullable<ApplyOptional<M, O>, N>
+    : never;
 
 /**
  * @param skip Skips following refines when called. Can be used to prevent further refines from throwing errors.
@@ -30,7 +35,13 @@ function deepCopy<T>(obj: T): T {
     return copy as T;
 }
 
-export abstract class Gimme<T, A extends object = {}> {
+/**
+ * @template T The type that will be parsed and validated.
+ * @template A Artefacts that can be passed to the Gimme instance.
+ * @template O Whether the type is optional.
+ * @template N Whether the type is nullable.
+ * */
+export abstract class Gimme<T, A extends object = {}, O extends boolean = false, N extends boolean = false> {
     static deepCopy = deepCopy;
 
     protected artefacts: GimmeArtefacts<T, A> = { message: "", eagerRefines: [], refines: [] } as any;
@@ -43,13 +54,22 @@ export abstract class Gimme<T, A extends object = {}> {
      * @param artefacts These will be merged with the current artefacts
      * @returns A copy of the current Gimme instance
      */
-    copy(artefacts?: Partial<GimmeArtefacts<T, A>>): Gimme<T> {
+    evolve(artefacts: Partial<GimmeArtefacts<T, A>>, copy = true): Gimme<T> {
+        const newArtefacts = {
+            ...this.artefacts,
+            refines: [...(this.artefacts.refines || []), ...(artefacts.refines || [])],
+            eagerRefines: [...(this.artefacts.eagerRefines || []), ...(artefacts.refines || [])],
+        };
+        if (!copy) {
+            this.artefacts = newArtefacts;
+            return this;
+        }
         const Ctr = this.constructor as any;
-        return new Ctr({ ...this.artefacts, ...artefacts });
+        return new Ctr(newArtefacts);
     }
 
     refine(refiner: Refine<T>, eager = false, copy = true) {
-        return this.copy({
+        return this.evolve({
             refines: copy ? [...this.artefacts.refines, refiner] : this.artefacts.refines,
             eagerRefines: eager ? [...this.artefacts.eagerRefines, refiner] : this.artefacts.eagerRefines,
         } as GimmeArtefacts<T, A>);
@@ -102,21 +122,21 @@ export abstract class Gimme<T, A extends object = {}> {
         return !this.parseSafe(data).data;
     }
 
-    nullable() {
+    nullable(): Gimme<T, A, O, true> {
         return this.refine((data, c, skip) => {
             if (data === null) skip();
             return data as T;
         }, true);
     }
 
-    optional() {
+    optional(): Gimme<T, A, true, N> {
         return this.refine((data, c, skip) => {
             if (data === undefined) skip();
             return data as T;
         }, true);
     }
 
-    default(value: T) {
+    default(value: T): Gimme<T, A, O, true> {
         return this.refine((data) => (data === undefined ? value : data) as T);
     }
 
@@ -141,7 +161,7 @@ export abstract class Gimme<T, A extends object = {}> {
     }
 
     message(message: string) {
-        return this.copy({ message } as GimmeArtefacts<T, A>);
+        return this.evolve({ message } as GimmeArtefacts<T, A>);
     }
 
     literal(value: T) {

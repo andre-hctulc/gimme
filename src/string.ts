@@ -8,7 +8,7 @@ export class GimmeString extends Gimme<string> {
             if (coerce) return data == null ? "" : String(data);
             if (typeof data !== "string") throw new GimmeTypeError("string", data);
             return data as string;
-        }, true);
+        }, true, false);
     }
 
     regex(regex: RegExp) {

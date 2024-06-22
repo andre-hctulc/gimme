@@ -10,7 +10,8 @@
         "noImplicitAny": true,
         "noImplicitThis": true,
         "alwaysStrict": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "outDir": "dist"
     },
     "include": ["src/**/*"],
     "exclude": ["*.test.ts"]

@@ -4,16 +4,20 @@ import { Gimme } from "./gimme";
 export class GimmeNumber extends Gimme<number> {
     constructor() {
         super();
-        this.refine((data, coerce) => {
-            if (coerce) {
-                const coerced = Number(data);
-                if (isNaN(coerced)) throw new GimmeTypeError("number", data);
-                return coerced;
-            }
+        this.refine(
+            (data, coerce) => {
+                if (coerce) {
+                    const coerced = Number(data);
+                    if (isNaN(coerced)) throw new GimmeTypeError("number", data);
+                    return coerced;
+                }
 
-            if (typeof data !== "number") throw new GimmeTypeError("number", data);
-            return data;
-        }, true);
+                if (typeof data !== "number") throw new GimmeTypeError("number", data);
+                return data;
+            },
+            true,
+            false
+        );
     }
 
     max(max: number) {

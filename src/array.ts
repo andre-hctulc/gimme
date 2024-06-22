@@ -1,47 +1,52 @@
-import { GimmeAny } from "./any";
 import { GimmeError, GimmeTypeError } from "./error";
-import { Gimme } from "./gimme";
+import { Gimme, InferType } from "./gimme";
 
-interface GimmeArrayArtefacts<T extends any[]> {}
-
-export class GimmeArray<T extends any[]> extends Gimme<T, GimmeArrayArtefacts<T>> {
-    constructor(items: Gimme<T[number]>) {
+export class GimmeArray<T extends Gimme<any>> extends Gimme<InferType<T>[]> {
+    constructor(items: Gimme<InferType<T>>) {
         super();
-        this.refine((data) => {
-            if (!Array.isArray(data)) throw new GimmeTypeError("array", data);
-            return data as T;
-        }, true);
-        this.items(items);
+        this.refine(
+            (data) => {
+                if (!Array.isArray(data)) throw new GimmeTypeError("array", data);
+                return data as InferType<T>[];
+            },
+            true,
+            false
+        );
+        this.items(items, false);
     }
 
     maxLen(max: number) {
         return this.refine((data, c, skip) => {
-            if ((data as T).length > max) throw new GimmeError("Too many items");
-            return data as T;
+            if ((data as InferType<T>[]).length > max) throw new GimmeError("Too many items");
+            return data as InferType<T>[];
         });
     }
 
     minLen(min: number) {
         return this.refine((data, c, skip) => {
-            if ((data as T).length < min) throw new GimmeError("Too less items");
-            return data as T;
+            if ((data as InferType<T>[]).length < min) throw new GimmeError("Too less items");
+            return data as InferType<T>[];
         });
     }
 
     len(len: number) {
         return this.refine((data, c, skip) => {
-            if ((data as T).length !== len) throw new GimmeError("Length mismatch");
-            return data as T;
+            if ((data as InferType<T>[]).length !== len) throw new GimmeError("Length mismatch");
+            return data as InferType<T>[];
         });
     }
 
-    items(gimme: Gimme<T[number]>) {
-        return this.refine((data, c, skip) => {
-            for (const item of data as T) {
-                // throws errors
-                gimme.parse(item);
-            }
-            return data as T;
-        });
+    items(gimme: Gimme<InferType<T>>, copy = true) {
+        return this.refine(
+            (data, c, skip) => {
+                for (const item of data as InferType<T>[]) {
+                    // throws errors
+                    gimme.parse(item);
+                }
+                return data as InferType<T>[];
+            },
+            false,
+            copy
+        );
     }
 }

@@ -1,11 +1,12 @@
 {
     "name": "@andre-hctulc/gimme",
     "version": "0.0.1",
-    "description": "",
-    "main": "index.js",
+    "description": "Schema validation library",
+    "main": "dist/index.js",
     "scripts": {
         "build": "tsc",
         "tc": "tsc --noEmit",
+        "tc:watch": "tsc --noEmit --watch",
         "test": "jest",
         "test:verbose": "jest --silent=false"
     },
