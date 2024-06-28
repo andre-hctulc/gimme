@@ -57,8 +57,7 @@ export abstract class Gimme<T, A extends object = {}, O extends boolean = false,
     evolve(artefacts: Partial<GimmeArtefacts<T, A>>, copy = true): Gimme<T> {
         const newArtefacts = {
             ...this.artefacts,
-            refines: [...(this.artefacts.refines || []), ...(artefacts.refines || [])],
-            eagerRefines: [...(this.artefacts.eagerRefines || []), ...(artefacts.refines || [])],
+            ...artefacts,
         };
         if (!copy) {
             this.artefacts = newArtefacts;
@@ -68,11 +67,19 @@ export abstract class Gimme<T, A extends object = {}, O extends boolean = false,
         return new Ctr(newArtefacts);
     }
 
+    /** Use this in the constructor instead of `refine` */
+    protected spawn(refiner: Refine<T>) {
+        this.refine(refiner, true, false);
+    }
+
     refine(refiner: Refine<T>, eager = false, copy = true) {
-        return this.evolve({
-            refines: copy ? [...this.artefacts.refines, refiner] : this.artefacts.refines,
-            eagerRefines: eager ? [...this.artefacts.eagerRefines, refiner] : this.artefacts.eagerRefines,
-        } as GimmeArtefacts<T, A>);
+        return this.evolve(
+            {
+                refines: eager ? [...this.artefacts.refines, refiner] : this.artefacts.refines,
+                eagerRefines: eager ? [...this.artefacts.eagerRefines, refiner] : this.artefacts.eagerRefines,
+            } as GimmeArtefacts<T, A>,
+            copy
+        );
     }
 
     parseSafe(data: unknown, coerce = false): SafeParse<T> {
@@ -171,7 +178,7 @@ export abstract class Gimme<T, A extends object = {}, O extends boolean = false,
         });
     }
 
-    values(values: T[]) {
+    values(values: Iterable<T>) {
         const set = new Set(values);
         return this.refine((data, c, skip) => {
             if (!set.has(data as T)) throw new GimmeError("Value not in list");

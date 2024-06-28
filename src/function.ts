@@ -4,14 +4,10 @@ import { Gimme } from "./gimme";
 export class GimmeFunc extends Gimme<Function> {
     constructor() {
         super();
-        this.refine(
-            (data) => {
-                if (typeof data !== "function") throw new GimmeTypeError("function", data);
-                return data as Function;
-            },
-            true,
-            false
-        );
+        this.spawn((data) => {
+            if (typeof data !== "function") throw new GimmeTypeError("function", data);
+            return data as Function;
+        });
     }
 
     primitive() {

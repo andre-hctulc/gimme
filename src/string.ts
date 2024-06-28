@@ -1,41 +1,41 @@
 import { GimmeError, GimmeTypeError } from "./error";
 import { Gimme } from "./gimme";
 
-export class GimmeString extends Gimme<string> {
+export class GimmeString<S extends string = string> extends Gimme<S> {
     constructor() {
         super();
-        this.refine((data, coerce) => {
-            if (coerce) return data == null ? "" : String(data);
+        this.spawn((data, coerce) => {
+            if (coerce) return data == null ? ("" as S) : (String(data) as S);
             if (typeof data !== "string") throw new GimmeTypeError("string", data);
-            return data as string;
-        }, true, false);
+            return data as S;
+        });
     }
 
     regex(regex: RegExp) {
         return this.refine((data) => {
             if (!regex.test(data as string)) throw new GimmeError("Regex not matched");
-            return data as string;
+            return data as S;
         });
     }
 
     maxLen(len: number) {
         return this.refine((data) => {
             if ((data as string).length < len) throw new GimmeError("Too long");
-            return data as string;
+            return data as S;
         });
     }
 
     minLen(len: number) {
         return this.refine((data) => {
             if ((data as string).length < len) throw new GimmeError("Too short");
-            return data as string;
+            return data as S;
         });
     }
 
     len(len: number) {
         return this.refine((data) => {
             if ((data as string).length !== len) throw new GimmeError("Length mismatch");
-            return data as string;
+            return data as S;
         });
     }
 
@@ -51,7 +51,7 @@ export class GimmeString extends Gimme<string> {
     pre(prefix: string) {
         return this.refine((data) => {
             if (!(data as string).startsWith(prefix)) throw new GimmeError("Does not start with prefix");
-            return data as string;
+            return data as S;
         });
     }
 
@@ -59,7 +59,11 @@ export class GimmeString extends Gimme<string> {
     suff(suffix: string) {
         return this.refine((data) => {
             if (!(data as string).endsWith(suffix)) throw new GimmeError("Does not end with suffix");
-            return data as string;
+            return data as S;
         });
+    }
+
+    enum<V extends [string, ...string[]]>(values: V): GimmeString<V[number]> {
+        return this.values(values as any) as unknown as GimmeString<V[number]>;
     }
 }

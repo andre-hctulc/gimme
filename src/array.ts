@@ -4,14 +4,10 @@ import { Gimme, InferType } from "./gimme";
 export class GimmeArray<T extends Gimme<any>> extends Gimme<InferType<T>[]> {
     constructor(items: Gimme<InferType<T>>) {
         super();
-        this.refine(
-            (data) => {
-                if (!Array.isArray(data)) throw new GimmeTypeError("array", data);
-                return data as InferType<T>[];
-            },
-            true,
-            false
-        );
+        this.spawn((data) => {
+            if (!Array.isArray(data)) throw new GimmeTypeError("array", data);
+            return data as InferType<T>[];
+        });
         this.items(items, false);
     }
 
