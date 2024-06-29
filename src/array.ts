@@ -1,5 +1,5 @@
 import { GimmeError, GimmeTypeError } from "./error";
-import { Gimme, InferType, Refine } from "./gimme";
+import { Gimme, InferType, Refiner } from "./gimme";
 
 export class GimmeArray<T extends Gimme<any>> extends Gimme<InferType<T>[]> {
     private _itemsSchema: Gimme<InferType<T>>;
@@ -9,7 +9,7 @@ export class GimmeArray<T extends Gimme<any>> extends Gimme<InferType<T>[]> {
         this._itemsSchema = items;
     }
 
-    protected spawn(refine: (refiner: Refine<InferType<T>[]>) => void): void {
+    protected spawn(refine: (refiner: Refiner<InferType<T>[]>) => void): void {
         refine((data) => {
             if (!Array.isArray(data)) throw new GimmeTypeError("array", data);
             data.forEach((it) => this._itemsSchema.parse(it));

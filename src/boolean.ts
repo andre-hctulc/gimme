@@ -1,8 +1,8 @@
 import { GimmeTypeError } from "./error";
-import { Gimme, Refine } from "./gimme";
+import { Gimme, Refiner } from "./gimme";
 
 export class GimmeBool extends Gimme<boolean> {
-    protected spawn(refine: (refiner: Refine<boolean>) => void): void {
+    protected spawn(refine: (refiner: Refiner<boolean>) => void): void {
         refine((data, coerce) => {
             if (coerce) return Boolean(data);
             if (typeof data !== "boolean") throw new GimmeTypeError("boolean", data);

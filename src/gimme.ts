@@ -8,19 +8,19 @@ export type InferType<T extends Gimme<any>> = T extends Gimme<infer M, infer O, 
     : never;
 
 /**
- * @param skip Skips following refines when called. Can be used to prevent further refines from throwing errors.
+ * @param skip Skips following refines when called. Can be used to prevent further refines from throwing errors. You must set `RefinerOptions.canSkip` to `true` to properly use this.
  * @throws `GimmeError`
  */
-export type Refine<T> = (data: unknown, coerce: boolean, skip: () => void) => T;
+export type Refiner<T> = (data: unknown, coerce: boolean, skip: () => void) => T;
 type RefinerOptions = EvolveOptions & { eager?: boolean; canSkip?: boolean };
 
 type EvolveOptions = { copy?: boolean };
 
 export type GimmeArtefacts<T> = {
     message: string;
-    refines: Refine<T>[];
-    eagerRefines: Refine<T>[];
-    canSkipRefines: Refine<T>[];
+    refines: Refiner<T>[];
+    eagerRefines: Refiner<T>[];
+    canSkipRefines: Refiner<T>[];
     coerce: boolean;
 };
 
@@ -93,7 +93,7 @@ export abstract class Gimme<T, O extends boolean = false, N extends boolean = fa
         return this.artefacts.coerce;
     }
 
-    protected abstract spawn(refine: (refiner: Refine<T>) => void): void;
+    protected abstract spawn(refine: (refiner: Refiner<T>) => void): void;
 
     /**
      * @param artefacts These will be merged with the current artefacts
@@ -111,7 +111,7 @@ export abstract class Gimme<T, O extends boolean = false, N extends boolean = fa
         return instance;
     }
 
-    refine(refiner: Refine<T>, options: RefinerOptions = {}) {
+    refine(refiner: Refiner<T>, options: RefinerOptions = {}) {
         const newArtefacts: Partial<GimmeArtefacts<T>> = {};
         if (options.canSkip) newArtefacts.canSkipRefines = [refiner];
         if (options.eager) newArtefacts.eagerRefines = [refiner];
@@ -196,7 +196,7 @@ export abstract class Gimme<T, O extends boolean = false, N extends boolean = fa
         return this.refine((data) => (data === undefined ? value : data) as T);
     }
 
-    or<G extends  Gimme<any>[]>(...gimmes: G) {
+    or<G extends Gimme<any>[]>(...gimmes: G) {
         return this.refine(
             (data, c, skip) => {
                 for (const gimme of gimmes) {

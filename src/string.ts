@@ -1,8 +1,8 @@
 import { GimmeError, GimmeTypeError } from "./error";
-import { Gimme, Refine } from "./gimme";
+import { Gimme, Refiner } from "./gimme";
 
 export class GimmeString<S extends string = string> extends Gimme<S> {
-    protected spawn(refine: (refiner: Refine<S>) => void): void {
+    protected spawn(refine: (refiner: Refiner<S>) => void): void {
         refine((data, coerce) => {
             if (coerce) return data == null ? ("" as S) : (String(data) as S);
             if (typeof data !== "string") throw new GimmeTypeError("string", data);

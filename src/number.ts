@@ -1,8 +1,8 @@
 import { GimmeTypeError } from "./error";
-import { Gimme, Refine } from "./gimme";
+import { Gimme, Refiner } from "./gimme";
 
 export class GimmeNumber<N extends number = number> extends Gimme<N> {
-    protected spawn(refine: (refiner: Refine<N>) => void): void {
+    protected spawn(refine: (refiner: Refiner<N>) => void): void {
         refine((data, coerce) => {
             if (data === Infinity || data === -Infinity)
                 throw new GimmeTypeError("number", "Infinity/-Infinity");

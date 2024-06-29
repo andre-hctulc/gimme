@@ -1,4 +1,4 @@
-import { Gimme, InferType, Refine } from "./gimme";
+import { Gimme, InferType, Refiner } from "./gimme";
 
 export class GimmeObject<T extends Record<string, Gimme<any>>> extends Gimme<{
     [K in keyof T]: InferType<T[K]>;
@@ -10,7 +10,7 @@ export class GimmeObject<T extends Record<string, Gimme<any>>> extends Gimme<{
         this._propsSchema = props;
     }
 
-    protected spawn(refine: (refiner: Refine<{ [K in keyof T]: InferType<T[K]> }>) => void): void {
+    protected spawn(refine: (refiner: Refiner<{ [K in keyof T]: InferType<T[K]> }>) => void): void {
         refine((data, coerce) => {
             if (typeof data !== "object" || !data || Array.isArray(data)) throw new TypeError("object");
             for (const key in this._propsSchema) {
