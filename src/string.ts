@@ -69,7 +69,7 @@ export class GimmeString<S extends string = string> extends Gimme<S> {
         });
     }
 
-    enum<V extends [string, ...string[]]>(values: V): GimmeString<V[number]> {
+    enum<V extends string[]>(values: V): GimmeString<V[number]> {
         return this.values(values as any) as unknown as GimmeString<V[number]>;
     }
 }

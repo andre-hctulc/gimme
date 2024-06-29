@@ -16,4 +16,12 @@ export class GimmeFunc extends Gimme<Function> {
             return data as Function;
         });
     }
+    
+    ctr() {
+        return this.refine((data, c, skip) => {
+            const str = (data as any).toString();
+            if (!str.startsWith("class")) throw new GimmeTypeError("primitive function", "class");
+            return data as Function;
+        });
+    }
 }

@@ -13,7 +13,7 @@ try {
     // Error handling
 }
 
-// Or
+// Or (these do not throw errors)
 const { data, errors } = Schema.parseSafe(param);
 const ok: boolean = Schema.ok(param);
 const errors: GimmeError[] = Schema.getErrors(param);
@@ -35,7 +35,8 @@ const severity = gimme
 `boolean`
 
 ```ts
-const flag = gimme.bool().parse(param);
+const ok = gimme.bool().parse(param);
+const flag = gimme.bool().coerce().parse(param);
 ```
 
 `number`
@@ -79,7 +80,7 @@ const fetcher = gimme.func().primitive().parse(param);
 `symbol`
 
 ```ts
-const sym = gimme.sym().parse(param);
+const symbol = gimme.sym().parse(param);
 ```
 
 `any`

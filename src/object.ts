@@ -1,3 +1,4 @@
+import { GimmeTypeError } from "./error";
 import { Gimme, InferType, Refiner } from "./gimme";
 
 export class GimmeObject<T extends Record<string, Gimme<any>>> extends Gimme<{
@@ -12,11 +13,17 @@ export class GimmeObject<T extends Record<string, Gimme<any>>> extends Gimme<{
 
     protected spawn(refine: (refiner: Refiner<{ [K in keyof T]: InferType<T[K]> }>) => void): void {
         refine((data, coerce) => {
-            if (typeof data !== "object" || !data || Array.isArray(data)) throw new TypeError("object");
+            if (!data || typeof data !== "object" || Array.isArray(data))
+                throw new GimmeTypeError("object", data);
+            const newData = {} as any;
+            // validate props
             for (const key in this._propsSchema) {
-                this._propsSchema[key].parse((data as any)[key]);
+                // validate field
+                const parsedData = this._propsSchema[key].parse((data as any)[key]);
+                // Only set keys if explicitly defined in data
+                if (key in data) newData[key] = parsedData;
             }
-            return data as any;
+            return newData as any;
         });
     }
 
