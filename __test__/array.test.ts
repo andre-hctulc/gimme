@@ -4,27 +4,27 @@ describe("gimme.arr()", () => {
     const Schema = gimme.arr(gimme.str());
     const arr = ["a", "b", "c"];
 
-    it("Infer type", () => {
+    it("Infers", () => {
         type ShouldBeArray = gimme.Infer<typeof Schema>;
     });
 
-    it("Allow arrays", () => {
+    it("Parses", () => {
         expect(Schema.ok(arr)).toBe(true);
         expect(Schema.ok(["a", 44, "c"])).toBe(false);
         expect(Schema.ok([])).toBe(true);
     });
 
-    it("Prohibit non arrays", () => {
+    it("Prohibits", () => {
         expect(Schema.ok("true")).toBe(false);
         expect(Schema.ok(1)).toBe(false);
         expect(Schema.ok({})).toBe(false);
     });
 
-    it("Coerce", () => {
+    it("Coerces", () => {
         expect(Schema.coerce().ok(arr)).toBe(true);
     });
 
-    it("Special refines", () => {
+    it("Refines", () => {
         // min len
         expect(Schema.minLen(4).ok(arr)).toBe(false);
         expect(Schema.minLen(2).ok(arr)).toBe(true);

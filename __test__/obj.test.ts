@@ -20,19 +20,19 @@ describe("gimme.obj()", () => {
         type ShouldBeObject = gimme.Infer<typeof Schema>;
     });
 
-    it("Allow objects", () => {
+    it("Parses", () => {
         expect(Schema.ok(obj)).toBe(true);
         expect(Schema.ok({ name: "andre" })).toBe(false);
         expect(Schema.ok({ ...obj, x: 33 })).toBe(true);
     });
 
-    it("Prohibit non objects", () => {
+    it("Prohibits", () => {
         expect(Schema.ok("true")).toBe(false);
         expect(Schema.ok(1)).toBe(false);
         expect(Schema.ok({})).toBe(false);
     });
 
-    it("Special refines", () => {
+    it("Refines", () => {
         // min props
         expect(Schema.minProps(3).ok(obj)).toBe(false);
         expect(Schema.minProps(1).ok(obj)).toBe(true);

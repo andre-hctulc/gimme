@@ -3,22 +3,22 @@ import gimme from "../src";
 describe("gimme.bool()", () => {
     const Schema = gimme.bool();
 
-    it("Infer type", () => {
+    it("Infers", () => {
         type ShouldBeBoolean = gimme.Infer<typeof Schema>;
     });
 
-    it("Allow booleans", () => {
+    it("Parses", () => {
         expect(Schema.parse(true)).toBe(true);
         expect(Schema.parse(false)).toBe(false);
     });
 
-    it("Prohibit non booleans", () => {
+    it("Prohibits", () => {
         expect(Schema.ok("true")).toBe(false);
         expect(Schema.ok(1)).toBe(false);
         expect(Schema.ok({})).toBe(false);
     });
 
-    it("Coerce", () => {
+    it("Coerces", () => {
         expect(Schema.coerce().ok("hello")).toBe(true);
         expect(Schema.coerce().parse(1)).toBe(true);
         expect(Schema.coerce().parse(0)).toBe(false);

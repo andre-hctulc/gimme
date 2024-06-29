@@ -3,28 +3,28 @@ import gimme from "../src";
 describe("gimme.num()", () => {
     const Schema = gimme.num();
 
-    it("Infer type", () => {
+    it("Infers", () => {
         type ShouldBeNumber = gimme.Infer<typeof Schema>;
     });
 
-    it("Allow numbers", () => {
+    it("Parses", () => {
         expect(Schema.parse(44)).toBe(44);
         expect(() => Schema.parse(Infinity)).toThrow();
         expect(() => Schema.parse("Infinity")).toThrow();
     });
 
-    it("Prohibit non numbers", () => {
+    it("Prohibits", () => {
         expect(() => Schema.parse("undefined")).toThrow();
         expect(() => Schema.parse(null)).toThrow();
         expect(() => Schema.parse(true)).toThrow();
     });
 
-    it("Coerce", () => {
+    it("Coerces", () => {
         expect(Schema.coerce().parse("55")).toBe(55);
         expect(() => Schema.coerce().parse("xxx")).toThrow();
     });
 
-    it("Special refines", () => {
+    it("Refines", () => {
         // min/max
         expect(Schema.max(10).parse(5)).toBe(5);
         expect(Schema.min(10).parse(15)).toBe(15);
