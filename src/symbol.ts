@@ -1,10 +1,9 @@
 import { GimmeTypeError } from "./error";
-import { Gimme } from "./gimme";
+import { Gimme, Refine } from "./gimme";
 
 export class GimmeSymbol extends Gimme<symbol> {
-    constructor() {
-        super();
-        this.spawn((data) => {
+    protected spawn(refine: (refiner: Refine<symbol>) => void): void {
+        refine((data) => {
             if (typeof data !== "symbol") throw new GimmeTypeError("symbol", data);
             return data as symbol;
         });

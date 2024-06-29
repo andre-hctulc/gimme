@@ -13,6 +13,7 @@
     "author": "André Thomas",
     "license": "ISC",
     "devDependencies": {
+        "@babel/preset-env": "^7.24.7",
         "@babel/preset-typescript": "^7.24.1",
         "@types/jest": "^29.5.12",
         "jest": "^29.7.0"

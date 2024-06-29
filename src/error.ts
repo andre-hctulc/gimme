@@ -24,7 +24,7 @@ export class GimmeTypeError extends GimmeError {
 
     constructor(expected: any, got: any, message?: string) {
         super(
-            `Expected ${GimmeTypeError.typeof(expected)}, got "${GimmeTypeError.typeof(got)}"${
+            `Expected ${GimmeTypeError.typeof(expected)}, got ${GimmeTypeError.typeof(got)}${
                 message ? `: ${message}` : ""
             }`
         );
