@@ -39,8 +39,5 @@ describe("gimme.obj()", () => {
         // max props
         expect(Schema.maxProps(1).ok(obj)).toBe(false);
         expect(Schema.maxProps(6).ok(obj)).toBe(true);
-        // len
-        expect(Schema.len(1).ok(obj)).toBe(false);
-        expect(Schema.len(2).ok(obj)).toBe(true);
     });
 });

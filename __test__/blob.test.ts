@@ -29,12 +29,12 @@ describe("gimme.blob()", () => {
     it("Refines", () => {
         // min size
         expect(() => Schema.minSize(500).parse(blob)).toThrow();
-        expect(() => Schema.minSize(1).parse(blob)).toBe(true);
+        expect(Schema.minSize(1).ok(blob)).toBe(true);
         // max size
         expect(() => Schema.maxSize(2).parse(blob)).toThrow();
-        expect(() => Schema.maxSize(40).parse(blob)).toBe(true);
+        expect(Schema.maxSize(40).ok(blob)).toBe(true);
         // mime type
         expect(() => Schema.mimeType("application/json").parse(blob)).toThrow();
-        expect(() => Schema.mimeType("text/plain").parse(blob)).toBe(true);
+        expect(Schema.mimeType("text/plain").ok(blob)).toBe(true);
     });
 });

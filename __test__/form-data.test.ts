@@ -1,9 +1,9 @@
 import gimme from "../src";
 
 describe("gimme.formdata()", () => {
-    const Schema = gimme.obj({
+    const Schema = gimme.fd({
         name: gimme.str(),
-        age: gimme.num(),
+        age: gimme.num().coerce(),
         address: gimme
             .obj({
                 street: gimme.str(),
@@ -17,11 +17,11 @@ describe("gimme.formdata()", () => {
     const emptyFd = new FormData();
 
     it("Infer type", () => {
-        type ShouldBeObject = gimme.Infer<typeof Schema>;
+        type ShouldBeFormData = gimme.Infer<typeof Schema>;
     });
 
     it("Parses", () => {
-        expect(Schema.ok(fd)).toBe(true);
+        expect(Schema.parse(fd) instanceof FormData).toBe(true);
     });
 
     it("Prohibits", () => {
@@ -32,13 +32,10 @@ describe("gimme.formdata()", () => {
 
     it("Refines", () => {
         // min props
-        expect(Schema.minProps(3).ok(obj)).toBe(false);
-        expect(Schema.minProps(1).ok(obj)).toBe(true);
+        expect(Schema.minProps(3).ok(fd)).toBe(false);
+        expect(Schema.minProps(1).ok(fd)).toBe(true);
         // max props
-        expect(Schema.maxProps(1).ok(obj)).toBe(false);
-        expect(Schema.maxProps(6).ok(obj)).toBe(true);
-        // len
-        expect(Schema.len(1).ok(obj)).toBe(false);
-        expect(Schema.len(2).ok(obj)).toBe(true);
+        expect(Schema.maxProps(1).ok(fd)).toBe(false);
+        expect(Schema.maxProps(6).ok(fd)).toBe(true);
     });
 });
