@@ -17,6 +17,7 @@ export class GimmeFormData<T extends Record<string, Gimme<any>>> extends Gimme<F
             for (const key in this._entriesSchema) {
                 // validate field
                 const parsedData = this._entriesSchema[key].parse(data.get(key));
+                // Only set keys if explicitly defined in data
                 if (data.has(key)) newFd.append(key, parsedData);
             }
             return newFd as any;

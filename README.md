@@ -62,14 +62,14 @@ const user = gimme
     .parse(param);
 ```
 
-`array`
+`Array`
 
 ```ts
 const names = gimme.arr(gimme.str());
 const namesRange = gimme.arr(gimme.str()).minLen(1).maxLen(20);
 ```
 
-`function`
+`Function`
 
 ```ts
 const fct = gimme.func().parse(param);
@@ -77,7 +77,7 @@ const Factory = gimme.func().ctr().parse(param);
 const fetcher = gimme.func().primitive().parse(param);
 ```
 
-`symbol`
+`Symbol`
 
 ```ts
 const symbol = gimme.sym().parse(param);
@@ -87,6 +87,24 @@ const symbol = gimme.sym().parse(param);
 
 ```ts
 const data = gimme.any().parse(param);
+```
+
+`Blob`
+
+```ts
+const data = gimme.blob().parse(param);
+```
+
+`FormData`
+
+```ts
+const user = gimme
+    .fd({
+        name: gimme.str(),
+        age: gimme.num().coerce(), // coerce numbers as FormData does not support numeric values
+        picture: gimme.blob().nullable(), // Make sure to use nullable instead of optional for FormData!
+    })
+    .parse(param);
 ```
 
 ### Infer TypeScript Types
