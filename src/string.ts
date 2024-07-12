@@ -19,7 +19,7 @@ export class GimmeString<S extends string = string> extends Gimme<S> {
 
     maxLen(len: number) {
         return this.refine((data) => {
-            if ((data as string).length < len) throw new GimmeError("Too long");
+            if ((data as string).length > len) throw new GimmeError("Too long");
             return data as S;
         });
     }

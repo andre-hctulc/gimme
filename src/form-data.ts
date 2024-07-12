@@ -1,7 +1,7 @@
 import { GimmeTypeError } from "./error";
 import { Gimme, InferType, Refiner } from "./gimme";
 
-export class GimmeObject<T extends Record<string, Gimme<any>>> extends Gimme<{
+export class GimmeFormData<T extends Record<string, Gimme<any>>> extends Gimme<{
     [K in keyof T]: InferType<T[K]>;
 }> {
     private _propsSchema: T;
@@ -13,11 +13,11 @@ export class GimmeObject<T extends Record<string, Gimme<any>>> extends Gimme<{
 
     protected spawn(refine: (refiner: Refiner<{ [K in keyof T]: InferType<T[K]> }>) => void): void {
         refine((data, coerce) => {
-            if (!data || typeof data !== "object" || Array.isArray(data))
-                throw new GimmeTypeError("object", data);
+            if (!(data instanceof FormData)) throw new GimmeTypeError("FormData", data);
+            // We transform the FormData into a plain object
             const newData = {} as any;
             // validate props
-            for (const key in this._propsSchema) {
+            for (const [key, value] of data.entries()) {
                 // validate field
                 const parsedData = this._propsSchema[key].parse((data as any)[key]);
                 // Only set keys if explicitly defined in data
