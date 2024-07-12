@@ -153,6 +153,11 @@ export abstract class Gimme<T, O extends boolean = false, N extends boolean = fa
         return !this.parseSafe(data).errors?.length;
     }
 
+    /** Preserves the _this_ context, other than `parse`. You can pass `Gimme.v` as independent function. */
+    v = (data: unknown) => {
+        return this.parse(data);
+    };
+
     nullable(): Gimme<T, O, true> {
         return this.refine(
             (data, c, skip) => {
