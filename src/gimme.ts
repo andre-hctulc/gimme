@@ -28,18 +28,6 @@ export type SafeParse<T> =
     | { data: T; errors: null; error: null }
     | { data: undefined; errors: GimmeError[]; error: GimmeError<GimmeError[]> };
 
-function deepCopy<T>(obj: T): T {
-    if (obj === null || typeof obj !== "object") {
-        return obj;
-    }
-    const copy = {};
-    // Works for arrays too!
-    for (const key in obj) {
-        (copy as any)[key] = deepCopy(obj[key]);
-    }
-    return copy as T;
-}
-
 const emptyArtefacts = () => {
     const empty: GimmeArtefacts<any> = {
         message: "",
@@ -75,8 +63,6 @@ function mergeArtefacts<T>(
  * @template N Whether the type is nullable.
  * */
 export abstract class Gimme<T, O extends boolean = false, N extends boolean = false> {
-    static deepCopy = deepCopy;
-
     protected artefacts = emptyArtefacts();
     private _ctrParams: any[];
 
@@ -158,7 +144,6 @@ export abstract class Gimme<T, O extends boolean = false, N extends boolean = fa
     }
 
     parse(data: unknown): T {
-        data = deepCopy(data);
         const safe = this.parseSafe(data);
         if (safe.error) throw safe.error;
         else return safe.data;
