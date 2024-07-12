@@ -1,6 +1,8 @@
 import { GimmeAny } from "./any";
 import { GimmeArray } from "./array";
+import { GimmeBlob } from "./blob";
 import { GimmeBool } from "./boolean";
+import { GimmeFormData } from "./form-data";
 import { GimmeFunc } from "./function";
 import { Gimme, InferType } from "./gimme";
 import { GimmeNumber } from "./number";
@@ -31,6 +33,8 @@ namespace gimme {
     export const func = () => new GimmeFunc();
     export const any = () => new GimmeAny();
     export const sym = () => new GimmeSymbol();
+    export const blob = () => new GimmeBlob();
+    export const fd = <T extends Record<string, Gimme<any>>>(props: T) => new GimmeFormData(props);
 
     export type Infer<T extends Gimme<any>> = InferType<T>;
 }
