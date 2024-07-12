@@ -12,11 +12,12 @@ export class GimmeFunc extends Gimme<Function> {
     primitive() {
         return this.refine((data, c, skip) => {
             const str = (data as any).toString();
-            if (!str.startsWith("function")) throw new GimmeTypeError("primitive function", "class");
+            if (!str.startsWith("function") && !str.startsWith("async function"))
+                throw new GimmeTypeError("primitive function", "class");
             return data as Function;
         });
     }
-    
+
     ctr() {
         return this.refine((data, c, skip) => {
             const str = (data as any).toString();

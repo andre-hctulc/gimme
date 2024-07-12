@@ -9,7 +9,7 @@ describe("gimme.formdata()", () => {
                 street: gimme.str(),
                 city: gimme.str(),
             })
-            .optional(),
+            .nullable(),
     });
     const fd = new FormData();
     fd.append("name", "John");
@@ -27,6 +27,7 @@ describe("gimme.formdata()", () => {
     it("Prohibits", () => {
         expect(Schema.ok("true")).toBe(false);
         expect(Schema.ok(1)).toBe(false);
+        expect(Schema.ok(emptyFd)).toBe(false);
         expect(Schema.ok({ name: "John", age: 22 })).toBe(false);
     });
 
