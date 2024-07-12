@@ -1,10 +1,9 @@
 import { GimmeTypeError } from "./error";
-import { Gimme } from "./gimme";
+import { Gimme, Refiner } from "./gimme";
 
 export class GimmeFunc extends Gimme<Function> {
-    constructor() {
-        super();
-        this.spawn((data) => {
+    protected spawn(refine: (refiner: Refiner<Function>) => void): void {
+        refine((data) => {
             if (typeof data !== "function") throw new GimmeTypeError("function", data);
             return data as Function;
         });
@@ -12,8 +11,16 @@ export class GimmeFunc extends Gimme<Function> {
 
     primitive() {
         return this.refine((data, c, skip) => {
-            if (!!(data as Function).prototype && !!(data as Function).prototype.constructor.name)
-                throw new GimmeTypeError("primitive function", data);
+            const str = (data as any).toString();
+            if (!str.startsWith("function")) throw new GimmeTypeError("primitive function", "class");
+            return data as Function;
+        });
+    }
+    
+    ctr() {
+        return this.refine((data, c, skip) => {
+            const str = (data as any).toString();
+            if (!str.startsWith("class")) throw new GimmeTypeError("primitive function", "class");
             return data as Function;
         });
     }

@@ -1,10 +1,9 @@
 import { GimmeError, GimmeTypeError } from "./error";
-import { Gimme } from "./gimme";
+import { Gimme, Refiner } from "./gimme";
 
 export class GimmeString<S extends string = string> extends Gimme<S> {
-    constructor() {
-        super();
-        this.spawn((data, coerce) => {
+    protected spawn(refine: (refiner: Refiner<S>) => void): void {
+        refine((data, coerce) => {
             if (coerce) return data == null ? ("" as S) : (String(data) as S);
             if (typeof data !== "string") throw new GimmeTypeError("string", data);
             return data as S;
@@ -40,11 +39,18 @@ export class GimmeString<S extends string = string> extends Gimme<S> {
     }
 
     email() {
-        return this.regex(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/);
+        return this.refine((data) => {
+            if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(data as string))
+                throw new GimmeError("Not an email");
+            return data as S;
+        });
     }
 
     url() {
-        return this.regex(/^(http|https):\/\/[^ "]+$/);
+        return this.refine((data) => {
+            if (!/^(http|https):\/\/[^ "]+$/.test(data as string)) throw new GimmeError("Not an URL");
+            return data as S;
+        });
     }
 
     /** prefix */
@@ -63,7 +69,7 @@ export class GimmeString<S extends string = string> extends Gimme<S> {
         });
     }
 
-    enum<V extends [string, ...string[]]>(values: V): GimmeString<V[number]> {
+    enum<V extends string[]>(values: V): GimmeString<V[number]> {
         return this.values(values as any) as unknown as GimmeString<V[number]>;
     }
 }

@@ -1,14 +1,20 @@
 import { GimmeError, GimmeTypeError } from "./error";
-import { Gimme, InferType } from "./gimme";
+import { Gimme, InferType, Refiner } from "./gimme";
 
 export class GimmeArray<T extends Gimme<any>> extends Gimme<InferType<T>[]> {
+    private _itemsSchema: Gimme<InferType<T>>;
+
     constructor(items: Gimme<InferType<T>>) {
-        super();
-        this.spawn((data) => {
+        super(items);
+        this._itemsSchema = items;
+    }
+
+    protected spawn(refine: (refiner: Refiner<InferType<T>[]>) => void): void {
+        refine((data) => {
             if (!Array.isArray(data)) throw new GimmeTypeError("array", data);
+            data.forEach((it) => this._itemsSchema.parse(it));
             return data as InferType<T>[];
         });
-        this.items(items, false);
     }
 
     maxLen(max: number) {
@@ -30,19 +36,5 @@ export class GimmeArray<T extends Gimme<any>> extends Gimme<InferType<T>[]> {
             if ((data as InferType<T>[]).length !== len) throw new GimmeError("Length mismatch");
             return data as InferType<T>[];
         });
-    }
-
-    items(gimme: Gimme<InferType<T>>, copy = true) {
-        return this.refine(
-            (data, c, skip) => {
-                for (const item of data as InferType<T>[]) {
-                    // throws errors
-                    gimme.parse(item);
-                }
-                return data as InferType<T>[];
-            },
-            false,
-            copy
-        );
     }
 }

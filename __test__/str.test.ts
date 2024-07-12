@@ -2,34 +2,41 @@ import gimme from "../src";
 
 describe("gimme.str()", () => {
     const Schema = gimme.str();
-    
-    it("Should be inferrable", () => {
-        const OptionalSchema = gimme.str().optional();
-        const NullableSchema = gimme.str().nullable();
-        const OptionalNullableSchema = gimme.str().optional().nullable();
-        type SchemaType = gimme.Infer<typeof Schema>;
-        type OptionalSchemaType = gimme.Infer<typeof OptionalSchema>;
-        type NullableSchemaType = gimme.Infer<typeof NullableSchema>;
-        type OptionalNullableSchemaType = gimme.Infer<typeof OptionalNullableSchema>;
+
+    it("Infers", () => {
+        type ShouldBeString = gimme.Infer<typeof Schema>;
+        const EnumSchema = Schema.enum(["hello", "world"] as const);
+        type EnumType = gimme.Infer<typeof EnumSchema>;
+        const EnumOtionalSchema = EnumSchema.optional();
+        type EnumTypeOptional = gimme.Infer<typeof EnumOtionalSchema>;
     });
 
-    it("Should parse strings", () => {
+    it("Parses", () => {
         expect(Schema.parse("hello")).toBe("hello");
-        expect(Schema.parse(undefined)).toThrow();
-        expect(Schema.parse(null)).toThrow();
-        expect(Schema.parse(undefined)).toBe("0");
+        expect(Schema.parse("")).toBe("");
     });
 
-    it("Should disallow non strings", () => {
-        expect(Schema.parse(0)).toThrow();
-        expect(Schema.parse(true)).toThrow();
-        expect(Schema.parse({})).toThrow();
+    it("Prohibits", () => {
+        expect(() => Schema.parse(undefined)).toThrow();
+        expect(() => Schema.parse(null)).toThrow();
+        expect(() => Schema.parse(33)).toThrow();
+        expect(() => Schema.parse(true)).toThrow();
     });
 
-    it("Should coerce strings", () => {
-        expect(Schema.coerce("hello")).toBe("hello");
-        expect(Schema.coerce(0)).toBe("0");
-        expect(Schema.coerce(null)).toBe("0");
-        expect(Schema.coerce(undefined)).toBe("0");
+    it("Coerces", () => {
+        expect(Schema.coerce().parse("hello")).toBe("hello");
+        expect(Schema.coerce().parse(0)).toBe("0");
+        expect(Schema.coerce().parse(null)).toBe("");
+        expect(Schema.coerce().parse(undefined)).toBe("");
+    });
+
+    it("Refines", () => {
+        expect(() => Schema.email().parse("no_email")).toThrow();
+        expect(Schema.email().ok("andre.tho@gmail.com")).toBe(true);
+        expect(() => Schema.url().parse("example.com")).toThrow();
+        expect(Schema.url().ok("https://example.com")).toBe(true);
+        expect(Schema.url().ok("http://example.com")).toBe(true);
+        expect(Schema.regex(/hello/).ok("hello")).toBe(true);
+        expect(Schema.regex(/hello/).ok("bye")).toBe(false);
     });
 });
