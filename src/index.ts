@@ -7,6 +7,7 @@ import { GimmeFunc } from "./function";
 import { Gimme, InferType } from "./gimme";
 import { GimmeNumber } from "./number";
 import { GimmeObject } from "./object";
+import { GimmeSearchParams } from "./search-params";
 import { GimmeString } from "./string";
 import { GimmeSymbol } from "./symbol";
 
@@ -45,6 +46,8 @@ namespace gimme {
     export const blob = () => new GimmeBlob();
     /** FormData */
     export const fd = <T extends Record<string, Gimme<any>>>(props: T) => new GimmeFormData(props);
+    /** URLSearchParams */
+    export const search = <T extends Record<string, Gimme<any>>>(props: T) => new GimmeSearchParams(props);
 
     export type Infer<T extends Gimme<any>> = InferType<T>;
 }
