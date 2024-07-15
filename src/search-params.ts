@@ -11,6 +11,9 @@ export class GimmeSearchParams<T extends Record<string, Gimme<any>>> extends Gim
 
     protected spawn(refine: (refiner: Refiner<URLSearchParams>) => void): void {
         refine((data, coerce) => {
+            if (coerce && data && typeof data === "object" && !Array.isArray(data)) {
+                data = new URLSearchParams(data as Record<string, any>);
+            }
             if (!(data instanceof URLSearchParams)) throw new GimmeTypeError("URLSearchParams", data);
             const newParams = new URLSearchParams();
             // validate props
