@@ -16,12 +16,18 @@ export class GimmeSearchParams<T extends Record<string, Gimme<any>>> extends Gim
             }
             if (!(data instanceof URLSearchParams)) throw new GimmeTypeError("URLSearchParams", data);
             const newParams = new URLSearchParams();
-            // validate props
+            // validate props (We have to look at all entries of a single key!)
             for (const key in this._paramsSchema) {
-                // validate field
-                const parsedData = this._paramsSchema[key].parse(data.get(key));
+                const entries = data.getAll(key);
+                let values = entries.map((val, i) => {
+                    const v = this._paramsSchema[key].parse(val);
+                    return v;
+                });
+                if (!values.length) values = [this._paramsSchema[key].parse(null)];
                 // Only set keys if explicitly defined in data
-                if (data.has(key)) newParams.append(key, parsedData);
+                if (data.has(key)) {
+                    values.forEach((entry) => newParams.append(key, entry));
+                }
             }
             return newParams as any;
         });

@@ -13,12 +13,18 @@ export class GimmeFormData<T extends Record<string, Gimme<any>>> extends Gimme<F
         refine((data, coerce) => {
             if (!(data instanceof FormData)) throw new GimmeTypeError("FormData", data);
             const newFd = new FormData();
-            // validate props
+            // validate props (We have to look at all entries of a single key!)
             for (const key in this._entriesSchema) {
-                // validate field
-                const parsedData = this._entriesSchema[key].parse(data.get(key));
+                const entries = data.getAll(key);
+                let values = entries.map((val, i) => {
+                    const v = this._entriesSchema[key].parse(val);
+                    return v;
+                });
+                if (!values.length) values = [this._entriesSchema[key].parse(null)];
                 // Only set keys if explicitly defined in data
-                if (data.has(key)) newFd.append(key, parsedData);
+                if (data.has(key)) {
+                    values.forEach((entry) => newFd.append(key, entry));
+                }
             }
             return newFd as any;
         });
