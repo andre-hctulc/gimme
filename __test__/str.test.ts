@@ -1,4 +1,4 @@
-import gimme from "../src";
+import gimme, { Gimme } from "../src";
 
 describe("gimme.str()", () => {
     const Schema = gimme.str();

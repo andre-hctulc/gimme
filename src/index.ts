@@ -33,9 +33,10 @@ namespace gimme {
     /** boolean */
     export const bool = () => new GimmeBool();
     /** object */
-    export const obj = <T extends Record<string, Gimme<any>>>(props: T) => new GimmeObject(props);
+    export const obj = <T extends Record<string, Gimme<any, boolean, boolean>>>(props: T) =>
+        new GimmeObject(props);
     /** Array */
-    export const arr = <T extends Gimme<any>>(items: T) => new GimmeArray<T>(items);
+    export const arr = <T extends Gimme<any, boolean, boolean>>(items: T) => new GimmeArray<T>(items);
     /** Function */
     export const func = () => new GimmeFunc();
     /** any */
@@ -45,11 +46,13 @@ namespace gimme {
     /** Blob */
     export const blob = () => new GimmeBlob();
     /** FormData */
-    export const fd = <T extends Record<string, Gimme<any>>>(props: T) => new GimmeFormData(props);
+    export const fd = <T extends Record<string, Gimme<any, boolean, boolean>>>(props: T) =>
+        new GimmeFormData(props);
     /** URLSearchParams */
-    export const search = <T extends Record<string, Gimme<any>>>(props: T) => new GimmeSearchParams(props);
+    export const search = <T extends Record<string, Gimme<any, boolean, boolean>>>(props: T) =>
+        new GimmeSearchParams(props);
 
-    export type Infer<T extends Gimme<any>> = InferType<T>;
+    export type Infer<T extends Gimme<any, boolean, boolean>> = InferType<T>;
 }
 
 export default gimme;

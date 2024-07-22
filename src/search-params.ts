@@ -1,5 +1,5 @@
 import { GimmeTypeError } from "./error";
-import { Gimme, Refiner } from "./gimme";
+import { Gimme, Spawner } from "./gimme";
 
 export class GimmeSearchParams<T extends Record<string, Gimme<any>>> extends Gimme<URLSearchParams> {
     private _paramsSchema: T;
@@ -9,7 +9,7 @@ export class GimmeSearchParams<T extends Record<string, Gimme<any>>> extends Gim
         this._paramsSchema = params;
     }
 
-    protected spawn(refine: (refiner: Refiner<URLSearchParams>) => void): void {
+    protected spawn(refine: Spawner<URLSearchParams>): void {
         refine((data, coerce) => {
             if (coerce && data && typeof data === "object" && !Array.isArray(data)) {
                 data = new URLSearchParams(data as Record<string, any>);
@@ -29,16 +29,14 @@ export class GimmeSearchParams<T extends Record<string, Gimme<any>>> extends Gim
 
     maxProps(max: number) {
         return this.refine((data) => {
-            if (Array.from((data as URLSearchParams).keys()).length > max)
-                throw new Error("Too many entries");
+            if (Array.from(data.keys()).length > max) throw new Error("Too many entries");
             return data as any;
         });
     }
 
     minProps(min: number) {
         return this.refine((data) => {
-            if (Array.from((data as URLSearchParams).keys()).length < min)
-                throw new Error("Too less entries");
+            if (Array.from(data.keys()).length < min) throw new Error("Too less entries");
             return data as any;
         });
     }

@@ -30,17 +30,11 @@ describe("Gimme", () => {
         expect(OrSchema.ok(2)).toBe(true);
         expect(OrSchema.ok("2")).toBe(true);
         expect(OrSchema.ok(true)).toBe(false);
-
         // And
-        const AndSchema = gimme.num().coerce().and(gimme.str());
-        expect(AndSchema.ok(2)).toBe(false);
-        expect(AndSchema.ok(true)).toBe(false);
-        // This should fail, as  the secon d (string) schema receives a number (parsed from the first schema)
-        expect(AndSchema.ok("2")).toBe(false);
-
-        // And2
-        const AndSchema2 = gimme.num().and(gimme.str().coerce());
-        expect(AndSchema2.ok(2)).toBe(true);
+        const AndSchema = gimme.obj({ s: gimme.str() }).and(gimme.obj({ n: gimme.num() }));
+        expect(AndSchema.ok({ s: "test" })).toBe(false);
+        expect(AndSchema.ok({ n: 4 })).toBe(false);
+        expect(AndSchema.ok({ n: 4, s: "test" })).toBe(true);
     });
 
     it("Refines", () => {

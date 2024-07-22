@@ -1,5 +1,5 @@
 import { GimmeTypeError } from "./error";
-import { Gimme, InferType, Refiner } from "./gimme";
+import { Gimme, InferType, Spawner } from "./gimme";
 
 export class GimmeObject<T extends Record<string, Gimme<any>>> extends Gimme<{
     [K in keyof T]: InferType<T[K]>;
@@ -11,7 +11,11 @@ export class GimmeObject<T extends Record<string, Gimme<any>>> extends Gimme<{
         this._propsSchema = props;
     }
 
-    protected spawn(refine: (refiner: Refiner<{ [K in keyof T]: InferType<T[K]> }>) => void): void {
+    protected spawn(
+        refine: Spawner<{
+            [K in keyof T]: InferType<T[K]>;
+        }>
+    ): void {
         refine((data, coerce) => {
             if (!data || typeof data !== "object" || Array.isArray(data))
                 throw new GimmeTypeError("object", data);
@@ -29,15 +33,15 @@ export class GimmeObject<T extends Record<string, Gimme<any>>> extends Gimme<{
 
     maxProps(max: number) {
         return this.refine((data) => {
-            if (Object.keys(data as any).length > max) throw new Error("Too many properties");
-            return data as any;
+            if (Object.keys(data).length > max) throw new Error("Too many properties");
+            return data;
         });
     }
 
     minProps(min: number) {
         return this.refine((data) => {
-            if (Object.keys(data as any).length < min) throw new Error("Too less properties");
-            return data as any;
+            if (Object.keys(data).length < min) throw new Error("Too less properties");
+            return data;
         });
     }
 

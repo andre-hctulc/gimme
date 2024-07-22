@@ -1,4 +1,5 @@
 import gimme from "../src";
+import { Gimme, InferType } from "../src/gimme";
 
 describe("gimme.num()", () => {
     const Schema = gimme.num();

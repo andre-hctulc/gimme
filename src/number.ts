@@ -1,8 +1,8 @@
 import { GimmeTypeError } from "./error";
-import { Gimme, Refiner } from "./gimme";
+import { Gimme, Spawner } from "./gimme";
 
 export class GimmeNumber<N extends number = number> extends Gimme<N> {
-    protected spawn(refine: (refiner: Refiner<N>) => void): void {
+    protected spawn(refine: Spawner<N>): void {
         refine((data, coerce) => {
             if (data === Infinity || data === -Infinity)
                 throw new GimmeTypeError("number", "Infinity/-Infinity");
@@ -20,14 +20,14 @@ export class GimmeNumber<N extends number = number> extends Gimme<N> {
 
     max(max: number) {
         return this.refine((data) => {
-            if ((data as number) > max) throw new GimmeTypeError(`number <= ${max}`, data);
+            if (data > max) throw new GimmeTypeError(`number <= ${max}`, data);
             return data as N;
         });
     }
 
     min(min: number) {
         return this.refine((data) => {
-            if ((data as number) < min) throw new GimmeTypeError(`number >= ${min}`, data);
+            if (data < min) throw new GimmeTypeError(`number >= ${min}`, data);
             return data as N;
         });
     }
@@ -47,7 +47,7 @@ export class GimmeNumber<N extends number = number> extends Gimme<N> {
                 }
                 return data as N;
             },
-            { canSkip: true }
+            { eager: true }
         );
     }
 

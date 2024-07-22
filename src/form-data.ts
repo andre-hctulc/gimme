@@ -1,5 +1,5 @@
 import { GimmeTypeError } from "./error";
-import { Gimme, Refiner } from "./gimme";
+import { Gimme, Spawner } from "./gimme";
 
 export class GimmeFormData<T extends Record<string, Gimme<any>>> extends Gimme<FormData> {
     private _entriesSchema: T;
@@ -9,7 +9,7 @@ export class GimmeFormData<T extends Record<string, Gimme<any>>> extends Gimme<F
         this._entriesSchema = entries;
     }
 
-    protected spawn(refine: (refiner: Refiner<FormData>) => void): void {
+    protected spawn(refine: Spawner<FormData>): void {
         refine((data, coerce) => {
             if (!(data instanceof FormData)) throw new GimmeTypeError("FormData", data);
             const newFd = new FormData();
@@ -26,15 +26,15 @@ export class GimmeFormData<T extends Record<string, Gimme<any>>> extends Gimme<F
 
     maxProps(max: number) {
         return this.refine((data) => {
-            if (Array.from((data as FormData).keys()).length > max) throw new Error("Too many entries");
-            return data as any;
+            if (Array.from(data.keys()).length > max) throw new Error("Too many entries");
+            return data;
         });
     }
 
     minProps(min: number) {
         return this.refine((data) => {
-            if (Array.from((data as FormData).keys()).length < min) throw new Error("Too less entries");
-            return data as any;
+            if (Array.from(data.keys()).length < min) throw new Error("Too less entries");
+            return data;
         });
     }
 

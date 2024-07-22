@@ -3,16 +3,17 @@ import { GimmeError, GimmeTypeError } from "./error";
 type ApplyNullable<T, N extends boolean> = N extends true ? T | null : T;
 type ApplyOptional<T, O extends boolean> = O extends true ? T | undefined : T;
 
-export type InferType<T extends Gimme<any>> = T extends Gimme<infer M, infer O, infer N>
+export type InferType<T extends Gimme> = T extends Gimme<infer M, infer O, infer N>
     ? ApplyNullable<ApplyOptional<M, O>, N>
     : never;
 
+type RefinerOptions = EvolveOptions & { eager?: boolean };
 /**
  * @param skip Skips following refines when called. Can be used to prevent further refines from throwing errors. You must set `RefinerOptions.canSkip` to `true` to properly use this.
  * @throws `GimmeError`
  */
-export type Refiner<T> = (data: unknown, coerce: boolean, skip: () => void) => T;
-type RefinerOptions = EvolveOptions & { eager?: boolean; canSkip?: boolean };
+export type Refiner<T> = (data: T, coerce: boolean, skip: () => void, originalData: unknown) => T;
+export type Spawner<T> = (refiner: (originalData: unknown, coerce: boolean) => T) => void;
 
 type EvolveOptions = { copy?: boolean };
 
@@ -20,7 +21,6 @@ export type GimmeArtefacts<T> = {
     message: string;
     refines: Refiner<T>[];
     eagerRefines: Refiner<T>[];
-    canSkipRefines: Refiner<T>[];
     coerce: boolean;
 };
 
@@ -31,9 +31,8 @@ export type SafeParse<T> =
 const emptyArtefacts = () => {
     const empty: GimmeArtefacts<any> = {
         message: "",
-        eagerRefines: [],
         refines: [],
-        canSkipRefines: [],
+        eagerRefines: [],
         coerce: false,
     };
     return empty;
@@ -53,7 +52,6 @@ function mergeArtefacts<T>(
         ...b,
         refines: [...(a?.refines || []), ...(b?.refines || [])],
         eagerRefines: [...(a?.eagerRefines || []), ...(b?.eagerRefines || [])],
-        canSkipRefines: [...(a?.canSkipRefines || []), ...(b?.canSkipRefines || [])],
     };
 }
 
@@ -62,13 +60,15 @@ function mergeArtefacts<T>(
  * @template O Whether the type is optional.
  * @template N Whether the type is nullable.
  * */
-export abstract class Gimme<T, O extends boolean = false, N extends boolean = false> {
+export abstract class Gimme<T = any, O extends boolean = false, N extends boolean = false> {
     protected artefacts = emptyArtefacts();
     private _ctrParams: any[];
 
     constructor(...params: any) {
         this._ctrParams = params;
-        this.spawn((refiner) => this.refine(refiner, { copy: false }));
+        this.spawn((refiner) =>
+            this.refine((d, coerce, skip, originalData) => refiner(originalData, coerce), { copy: false })
+        );
     }
 
     setArtefacts(artefacts: Partial<GimmeArtefacts<T>>) {
@@ -79,7 +79,7 @@ export abstract class Gimme<T, O extends boolean = false, N extends boolean = fa
         return this.artefacts.coerce;
     }
 
-    protected abstract spawn(refine: (refiner: Refiner<T>) => void): void;
+    protected abstract spawn(refine: Spawner<T>): void;
     protected merge?(value1: any, value2: any): any;
 
     /**
@@ -100,7 +100,6 @@ export abstract class Gimme<T, O extends boolean = false, N extends boolean = fa
 
     refine(refiner: Refiner<T>, options: RefinerOptions = {}) {
         const newArtefacts: Partial<GimmeArtefacts<T>> = {};
-        if (options.canSkip) newArtefacts.canSkipRefines = [refiner];
         if (options.eager) newArtefacts.eagerRefines = [refiner];
         else newArtefacts.refines = [refiner];
         return this.evolve(newArtefacts, options);
@@ -108,20 +107,16 @@ export abstract class Gimme<T, O extends boolean = false, N extends boolean = fa
 
     parseSafe(data: unknown, collectAllErrors = false): SafeParse<T> {
         const errs: GimmeError[] = [];
-        const refines = [
-            ...this.artefacts.canSkipRefines,
-            ...this.artefacts.eagerRefines,
-            ...this.artefacts.refines,
-        ];
+        const refines = [...this.artefacts.eagerRefines, ...this.artefacts.refines];
         let skipped = false;
+        let refinedData = data;
 
         for (const refine of refines) {
             try {
-                const refinedData = refine(data, this.artefacts.coerce, () => (skipped = true));
-                if (refinedData !== undefined) data = refinedData;
+                refinedData = refine(refinedData, this.artefacts.coerce, () => (skipped = true), data);
                 // If a refine skipped, we don't want to continue with the rest of the refines
                 // for example if a nullable() receives null, we don't want/need to check further refines
-                if (skipped /* && !collectAllErrors */) break;
+                if (skipped) break;
             } catch (err) {
                 if (err instanceof GimmeError) errs.push(err);
                 else errs.push(new GimmeError("Unknown error", err));
@@ -135,7 +130,7 @@ export abstract class Gimme<T, O extends boolean = false, N extends boolean = fa
             return { errors: errs, data: undefined, error: errColl };
         }
 
-        return { errors: null, data: data as T, error: null };
+        return { errors: null, data: refinedData as T, error: null };
     }
 
     getErrors(data: unknown): GimmeError[] {
@@ -161,21 +156,21 @@ export abstract class Gimme<T, O extends boolean = false, N extends boolean = fa
 
     nullable(): Gimme<T, O, true> {
         return this.refine(
-            (data, c, skip) => {
-                if (data === null) skip();
-                return data as T;
+            (d, c, skip, od) => {
+                if (od === null) skip();
+                return od as T;
             },
-            { canSkip: true }
+            { eager: true }
         );
     }
 
     optional(): Gimme<T, true, N> {
         return this.refine(
-            (data, c, skip) => {
-                if (data === undefined) skip();
-                return data as T;
+            (d, c, skip, od) => {
+                if (od === undefined) skip();
+                return od as any;
             },
-            { canSkip: true }
+            { eager: true }
         );
     }
 
@@ -187,24 +182,24 @@ export abstract class Gimme<T, O extends boolean = false, N extends boolean = fa
         return this.refine((data) => (data === undefined ? value : data) as T);
     }
 
-    or<G extends Gimme<any, boolean, boolean>>(schema: G): Gimme<T | InferType<G>, O, N> {
+    or<S>(schema: Gimme<S>): Gimme<T | S, O, N> {
         return this.refine(
-            (data, c, skip) => {
-                const { error, data: d } = schema.parseSafe(data);
+            (data, c, skip, originalData) => {
+                const { error, data: d } = schema.parseSafe(originalData);
                 if (!error) skip();
                 return data as T;
             },
-            { canSkip: true }
-        ) as Gimme<any>;
+            { eager: true }
+        ) as Gimme<any, boolean, boolean>;
     }
 
-    and<G extends Gimme<any, boolean, boolean>>(schema: G): Gimme<T & InferType<G>, O, N> {
+    and<S>(schema: Gimme<S>): Gimme<T & S, O, N> {
         if (!this.merge) throw new Error("Cannot use 'and' with this type");
 
-        return this.refine((data, c, skip) => {
-            const newValue = schema.parse(data);
+        return this.refine((data, c, skip, originalData) => {
+            const newValue = schema.parse(originalData);
             return this.merge!(data, newValue);
-        }) as Gimme<any>;
+        }) as Gimme<any, boolean, boolean>;
     }
 
     message(message: string) {
