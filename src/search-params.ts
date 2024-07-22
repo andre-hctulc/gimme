@@ -42,4 +42,10 @@ export class GimmeSearchParams<T extends Record<string, Gimme<any>>> extends Gim
             return data as any;
         });
     }
+
+    protected merge(value1: URLSearchParams, value2: URLSearchParams): URLSearchParams {
+        const newParams = new URLSearchParams(value1);
+        Array.from(value2.entries()).forEach(([key, val]) => newParams.append(key, val));
+        return newParams;
+    }
 }

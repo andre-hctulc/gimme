@@ -80,6 +80,7 @@ export abstract class Gimme<T, O extends boolean = false, N extends boolean = fa
     }
 
     protected abstract spawn(refine: (refiner: Refiner<T>) => void): void;
+    protected merge?(value1: any, value2: any): any;
 
     /**
      * @param artefacts These will be merged with the current artefacts
@@ -186,26 +187,24 @@ export abstract class Gimme<T, O extends boolean = false, N extends boolean = fa
         return this.refine((data) => (data === undefined ? value : data) as T);
     }
 
-    or<G extends Gimme<any>[]>(...gimmes: G) {
+    or<G extends Gimme<any, boolean, boolean>>(schema: G): Gimme<T | InferType<G>, O, N> {
         return this.refine(
             (data, c, skip) => {
-                for (const gimme of gimmes) {
-                    const { error, data: d } = gimme.parseSafe(data);
-                    if (!error) skip();
-                }
+                const { error, data: d } = schema.parseSafe(data);
+                if (!error) skip();
                 return data as T;
             },
             { canSkip: true }
-        );
+        ) as Gimme<any>;
     }
 
-    and(...gimmes: Gimme<any>[]) {
+    and<G extends Gimme<any, boolean, boolean>>(schema: G): Gimme<T & InferType<G>, O, N> {
+        if (!this.merge) throw new Error("Cannot use 'and' with this type");
+
         return this.refine((data, c, skip) => {
-            for (const gimme of gimmes) {
-                gimme.parse(data);
-            }
-            return data as T;
-        });
+            const newValue = schema.parse(data);
+            return this.merge!(data, newValue);
+        }) as Gimme<any>;
     }
 
     message(message: string) {

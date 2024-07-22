@@ -37,4 +37,11 @@ export class GimmeFormData<T extends Record<string, Gimme<any>>> extends Gimme<F
             return data as any;
         });
     }
+
+    protected merge(value1: FormData, value2: FormData): FormData {
+        const newFd = new FormData();
+        Array.from(value1.entries()).forEach(([key, val]) => newFd.append(key, val));
+        Array.from(value2.entries()).forEach(([key, val]) => newFd.append(key, val));
+        return newFd;
+    }
 }

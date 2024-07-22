@@ -101,7 +101,6 @@ const data = gimme.blob().parse(param);
 const user = gimme
     .fd({
         name: gimme.str(),
-        age: gimme.num().coerce(), // coerce numbers as FormData does not support numeric values
         picture: gimme.blob().nullable(), // Make sure to use nullable instead of optional for FormData!
     })
     .parse(param);

@@ -40,4 +40,10 @@ export class GimmeObject<T extends Record<string, Gimme<any>>> extends Gimme<{
             return data as any;
         });
     }
+
+    protected merge(value1: any, value2: any): any {
+        const result = {} as any;
+        for (const key in value1) result[key] = value1[key];
+        for (const key in value2) result[key] = value2[key];
+    }
 }
