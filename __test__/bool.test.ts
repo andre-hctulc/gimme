@@ -1,10 +1,10 @@
-import gimme from "../src";
+import g from "../src";
 
 describe("gimme.bool()", () => {
-    const Schema = gimme.bool();
+    const Schema = g.bool();
 
     it("Infers", () => {
-        type ShouldBeBoolean = gimme.Infer<typeof Schema>;
+        type ShouldBeBoolean = g.Infer<typeof Schema>;
     });
 
     it("Parses", () => {

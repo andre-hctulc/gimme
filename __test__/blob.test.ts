@@ -1,12 +1,12 @@
-import gimme from "../src";
+import g from "../src";
 
 describe("gimme.blob()", () => {
-    const Schema = gimme.blob();
+    const Schema = g.blob();
 
     it("Infers", () => {
-        type ShouldBeBlob = gimme.Infer<typeof Schema>;
+        type ShouldBeBlob = g.Infer<typeof Schema>;
         const OtionalSchema = Schema.optional();
-        type TypeOptional = gimme.Infer<typeof OtionalSchema>;
+        type TypeOptional = g.Infer<typeof OtionalSchema>;
     });
 
     const blob = new Blob(["hello"], { type: "text/plain" });

@@ -1,13 +1,13 @@
-import gimme from "../src";
+import g from "../src";
 
 describe("gimme.search()", () => {
-    const Schema = gimme.search({
-        name: gimme.str(),
-        age: gimme.num().coerce(),
-        address: gimme
+    const Schema = g.search({
+        name: g.str(),
+        age: g.num().coerce(),
+        address: g
             .obj({
-                street: gimme.str(),
-                city: gimme.str(),
+                street: g.str(),
+                city: g.str(),
             })
             .nullable(),
     });
@@ -17,7 +17,7 @@ describe("gimme.search()", () => {
     const emptySearch = new URLSearchParams();
 
     it("Infer type", () => {
-        type ShouldBeSearchParams = gimme.Infer<typeof Schema>;
+        type ShouldBeSearchParams = g.Infer<typeof Schema>;
     });
 
     it("Parses", () => {

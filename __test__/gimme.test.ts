@@ -1,17 +1,17 @@
-import gimme from "../src";
+import g from "../src";
 
 describe("Gimme", () => {
-    const StrSchema = gimme.str();
-    const NumSchema = gimme.num();
+    const StrSchema = g.str();
+    const NumSchema = g.num();
 
     it("Infers", () => {
-        const OptionalSchema = gimme.str().optional();
-        const NullableSchema = gimme.str().nullable();
-        const OptionalNullableSchema = gimme.str().optional().nullable();
-        type SchemaType = gimme.Infer<typeof StrSchema>;
-        type OptionalSchemaType = gimme.Infer<typeof OptionalSchema>;
-        type NullableSchemaType = gimme.Infer<typeof NullableSchema>;
-        type OptionalNullableSchemaType = gimme.Infer<typeof OptionalNullableSchema>;
+        const OptionalSchema = g.str().optional();
+        const NullableSchema = g.str().nullable();
+        const OptionalNullableSchema = g.str().optional().nullable();
+        type SchemaType = g.Infer<typeof StrSchema>;
+        type OptionalSchemaType = g.Infer<typeof OptionalSchema>;
+        type NullableSchemaType = g.Infer<typeof NullableSchema>;
+        type OptionalNullableSchemaType = g.Infer<typeof OptionalNullableSchema>;
     });
 
     it("Parses", () => {
@@ -26,12 +26,12 @@ describe("Gimme", () => {
         expect(StrSchema.nullable().parse(null)).toBeNull();
         expect(StrSchema.nullable().parse("null")).toBe("null");
         // Or
-        const OrSchema = gimme.num().or(gimme.str());
+        const OrSchema = g.num().or(g.str());
         expect(OrSchema.ok(2)).toBe(true);
         expect(OrSchema.ok("2")).toBe(true);
         expect(OrSchema.ok(true)).toBe(false);
         // And
-        const AndSchema = gimme.obj({ s: gimme.str() }).and(gimme.obj({ n: gimme.num() }));
+        const AndSchema = g.obj({ s: g.str() }).and(g.obj({ n: g.num() }));
         expect(AndSchema.ok({ s: "test" })).toBe(false);
         expect(AndSchema.ok({ n: 4 })).toBe(false);
         expect(AndSchema.ok({ n: 4, s: "test" })).toBe(true);

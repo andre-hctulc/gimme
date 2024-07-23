@@ -1,11 +1,11 @@
-import gimme from "../src";
+import g from "../src";
 
 describe("gimme.arr()", () => {
-    const Schema = gimme.arr(gimme.str());
+    const Schema = g.arr(g.str());
     const arr = ["a", "b", "c"];
 
     it("Infers", () => {
-        type ShouldBeArray = gimme.Infer<typeof Schema>;
+        type ShouldBeArray = g.Infer<typeof Schema>;
     });
 
     it("Parses", () => {

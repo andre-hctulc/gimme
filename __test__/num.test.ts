@@ -1,11 +1,10 @@
-import gimme from "../src";
-import { Gimme, InferType } from "../src/gimme";
+import g from "../src";
 
 describe("gimme.num()", () => {
-    const Schema = gimme.num();
+    const Schema = g.num();
 
     it("Infers", () => {
-        type ShouldBeNumber = gimme.Infer<typeof Schema>;
+        type ShouldBeNumber = g.Infer<typeof Schema>;
     });
 
     it("Parses", () => {

@@ -1,13 +1,13 @@
-import gimme from "../src";
+import g from "../src";
 
-describe("gimme.formdata()", () => {
-    const Schema = gimme.fd({
-        name: gimme.str(),
-        age: gimme.num().coerce(),
-        address: gimme
+describe("gimme.fd()", () => {
+    const Schema = g.fd({
+        name: g.str(),
+        age: g.num().coerce(),
+        address: g
             .obj({
-                street: gimme.str(),
-                city: gimme.str(),
+                street: g.str(),
+                city: g.str(),
             })
             .nullable(),
     });
@@ -17,7 +17,7 @@ describe("gimme.formdata()", () => {
     const emptyFd = new FormData();
 
     it("Infer type", () => {
-        type ShouldBeFormData = gimme.Infer<typeof Schema>;
+        type ShouldBeFormData = g.Infer<typeof Schema>;
     });
 
     it("Parses", () => {

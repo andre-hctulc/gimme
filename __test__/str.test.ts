@@ -1,14 +1,14 @@
-import gimme, { Gimme } from "../src";
+import g, { Gimme } from "../src";
 
 describe("gimme.str()", () => {
-    const Schema = gimme.str();
+    const Schema = g.str();
 
     it("Infers", () => {
-        type ShouldBeString = gimme.Infer<typeof Schema>;
+        type ShouldBeString = g.Infer<typeof Schema>;
         const EnumSchema = Schema.enum(["hello", "world"] as const);
-        type EnumType = gimme.Infer<typeof EnumSchema>;
+        type EnumType = g.Infer<typeof EnumSchema>;
         const EnumOtionalSchema = EnumSchema.optional();
-        type EnumTypeOptional = gimme.Infer<typeof EnumOtionalSchema>;
+        type EnumTypeOptional = g.Infer<typeof EnumOtionalSchema>;
     });
 
     it("Parses", () => {
