@@ -1,6 +1,6 @@
 # gimme
 
-Schema validation library inspired from [zod](https://zod.dev/).
+Schema validation library inspired by [zod](https://zod.dev/).
 
 ## Usage
 
