@@ -106,6 +106,23 @@ const user = gimme
     .parse(param);
 ```
 
+`URLSearchParams`
+
+```ts
+const filter = gimme
+    .search({
+        age: gimme.num(),
+        gender: gimme.str(),
+    })
+    .parse(param);
+```
+
+`Record`
+
+```ts
+const metadata = gimme.rec(gimme.str()).parse(param);
+```
+
 ### Infer TypeScript Types
 
 ```ts
