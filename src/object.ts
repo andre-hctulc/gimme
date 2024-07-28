@@ -1,9 +1,7 @@
 import { GimmeTypeError } from "./error";
-import { Gimme, InferType, Spawner } from "./gimme";
+import { Gimme, GimmeMap, InferType, Spawner } from "./gimme";
 
-export class GimmeObject<T extends Record<string, Gimme<any>>> extends Gimme<{
-    [K in keyof T]: InferType<T[K]>;
-}> {
+export class GimmeObject<T extends GimmeMap> extends Gimme<InferType<T>> {
     private _propsSchema: T;
 
     constructor(props: T) {
@@ -11,11 +9,7 @@ export class GimmeObject<T extends Record<string, Gimme<any>>> extends Gimme<{
         this._propsSchema = props;
     }
 
-    protected spawn(
-        refine: Spawner<{
-            [K in keyof T]: InferType<T[K]>;
-        }>
-    ): void {
+    protected spawn(refine: Spawner<InferType<T>>): void {
         refine((data, coerce) => {
             if (!data || typeof data !== "object" || Array.isArray(data))
                 throw new GimmeTypeError("object", data);
@@ -23,7 +17,7 @@ export class GimmeObject<T extends Record<string, Gimme<any>>> extends Gimme<{
             // validate props
             for (const key in this._propsSchema) {
                 // validate field
-                const parsedData = this._propsSchema[key].parse((data as any)[key]);
+                const parsedData = this._propsSchema[key].p((data as any)[key]);
                 // Only set keys if explicitly defined in data
                 if (key in data) newData[key] = parsedData;
             }
@@ -41,6 +35,54 @@ export class GimmeObject<T extends Record<string, Gimme<any>>> extends Gimme<{
     minProps(min: number) {
         return this.refine((data) => {
             if (Object.keys(data).length < min) throw new Error("Too less properties");
+            return data;
+        });
+    }
+
+    minPropsNotUndefined(min: number) {
+        return this.refine((data) => {
+            const keys = Object.keys(data).filter((key) => (data as any)[key] !== undefined);
+            if (keys.length < min) throw new Error("Too less properties not undefined");
+            return data;
+        });
+    }
+
+    maxPropsNotUndefined(max: number) {
+        return this.refine((data) => {
+            const keys = Object.keys(data).filter((key) => (data as any)[key] !== undefined);
+            if (keys.length > max) throw new Error("Too many properties not undefined");
+            return data;
+        });
+    }
+
+    minPropsNotNull() {
+        return this.refine((data) => {
+            const keys = Object.keys(data).filter((key) => (data as any)[key] != null);
+            if (keys.length < 1) throw new Error("Too less properties not null or undefined");
+            return data;
+        });
+    }
+
+    maxPropsNotNull() {
+        return this.refine((data) => {
+            const keys = Object.keys(data).filter((key) => (data as any)[key] != null);
+            if (keys.length > 1) throw new Error("Too many properties not null or undefined");
+            return data;
+        });
+    }
+
+    minPropsNotNullOrUndefined(min: number) {
+        return this.refine((data) => {
+            const keys = Object.keys(data).filter((key) => (data as any)[key] != null);
+            if (keys.length < min) throw new Error("Too less properties not null or undefined");
+            return data;
+        });
+    }
+
+    maxPropsNotNullOrUndefined(max: number) {
+        return this.refine((data) => {
+            const keys = Object.keys(data).filter((key) => (data as any)[key] != null);
+            if (keys.length > max) throw new Error("Too many properties not null or undefined");
             return data;
         });
     }

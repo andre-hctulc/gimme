@@ -1,7 +1,7 @@
 import { GimmeTypeError } from "./error";
-import { Gimme, Spawner } from "./gimme";
+import { Gimme, GimmeMap, Spawner } from "./gimme";
 
-export class GimmeSearchParams<T extends Record<string, Gimme<any>>> extends Gimme<URLSearchParams> {
+export class GimmeSearchParams<T extends GimmeMap> extends Gimme<URLSearchParams> {
     private _paramsSchema: T;
 
     constructor(params: T) {
@@ -20,10 +20,10 @@ export class GimmeSearchParams<T extends Record<string, Gimme<any>>> extends Gim
             for (const key in this._paramsSchema) {
                 const entries = data.getAll(key);
                 let values = entries.map((val, i) => {
-                    const v = this._paramsSchema[key].parse(val);
+                    const v = this._paramsSchema[key].p(val);
                     return v;
                 });
-                if (!values.length) values = [this._paramsSchema[key].parse(null)];
+                if (!values.length) values = [this._paramsSchema[key].p(null)];
                 // Only set keys if explicitly defined in data
                 if (data.has(key)) {
                     values.forEach((entry) => newParams.append(key, entry));

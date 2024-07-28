@@ -1,7 +1,7 @@
 import { GimmeTypeError } from "./error";
-import { Gimme, Spawner } from "./gimme";
+import { Gimme, GimmeMap, Spawner } from "./gimme";
 
-export class GimmeFormData<T extends Record<string, Gimme<any>>> extends Gimme<FormData> {
+export class GimmeFormData<T extends GimmeMap> extends Gimme<FormData> {
     private _entriesSchema: T;
 
     constructor(entries: T) {
@@ -17,10 +17,10 @@ export class GimmeFormData<T extends Record<string, Gimme<any>>> extends Gimme<F
             for (const key in this._entriesSchema) {
                 const entries = data.getAll(key);
                 let values = entries.map((val, i) => {
-                    const v = this._entriesSchema[key].parse(val);
+                    const v = this._entriesSchema[key].p(val);
                     return v;
                 });
-                if (!values.length) values = [this._entriesSchema[key].parse(null)];
+                if (!values.length) values = [this._entriesSchema[key].p(null)];
                 // Only set keys if explicitly defined in data
                 if (data.has(key)) {
                     values.forEach((entry) => newFd.append(key, entry));
@@ -49,5 +49,21 @@ export class GimmeFormData<T extends Record<string, Gimme<any>>> extends Gimme<F
         Array.from(value1.entries()).forEach(([key, val]) => newFd.append(key, val));
         Array.from(value2.entries()).forEach(([key, val]) => newFd.append(key, val));
         return newFd;
+    }
+
+    minPropsNotNull() {
+        return this.refine((data) => {
+            const keys = Array.from(data.keys()).filter((key) => data.get(key) != null);
+            if (keys.length < 1) throw new Error("Too less entries not null");
+            return data;
+        });
+    }
+
+    maxPropsNotNull() {
+        return this.refine((data) => {
+            const keys = Array.from(data.keys()).filter((key) => data.get(key) != null);
+            if (keys.length > 1) throw new Error("Too many entries not null");
+            return data;
+        });
     }
 }

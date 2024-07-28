@@ -72,4 +72,25 @@ export class GimmeString<S extends string = string> extends Gimme<S> {
     enum<V extends string[]>(values: V): GimmeString<V[number]> {
         return this.values(values as any) as unknown as GimmeString<V[number]>;
     }
+
+    /** Causes extra parsing */
+    json(schema?: Gimme) {
+        return this.refine((data) => {
+            try {
+                const parsed = JSON.parse(data as string);
+                if (schema) schema.p(parsed);
+                return data;
+            } catch (e) {
+                throw new GimmeTypeError("JSON", data);
+            }
+        });
+    }
+
+    uuid() {
+        return this.refine((data) => {
+            if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(data as string))
+                throw new GimmeTypeError("UUID", data);
+            return data;
+        });
+    }
 }

@@ -4,7 +4,7 @@ import { GimmeBlob } from "./blob";
 import { GimmeBool } from "./boolean";
 import { GimmeFormData } from "./form-data";
 import { GimmeFunc } from "./function";
-import { Gimme, InferType } from "./gimme";
+import { Gimme, GimmeMap, InferType } from "./gimme";
 import { GimmeNumber } from "./number";
 import { GimmeObject } from "./object";
 import { GimmeRecord } from "./record";
@@ -34,10 +34,9 @@ namespace gimme {
     /** boolean */
     export const bool = () => new GimmeBool();
     /** object */
-    export const obj = <T extends Record<string, Gimme<any, boolean, boolean>>>(props: T) =>
-        new GimmeObject(props);
+    export const obj = <T extends Record<string, Gimme>>(props: T) => new GimmeObject(props);
     /** Array */
-    export const arr = <T extends Gimme<any, boolean, boolean>>(items: T) => new GimmeArray<T>(items);
+    export const arr = <T extends Gimme>(items: T) => new GimmeArray<T>(items);
     /** Function */
     export const func = () => new GimmeFunc();
     /** any */
@@ -47,15 +46,13 @@ namespace gimme {
     /** Blob */
     export const blob = () => new GimmeBlob();
     /** FormData */
-    export const fd = <T extends Record<string, Gimme<any, boolean, boolean>>>(props: T) =>
-        new GimmeFormData(props);
+    export const fd = <T extends Record<string, Gimme>>(props: T) => new GimmeFormData(props);
     /** URLSearchParams */
-    export const search = <T extends Record<string, Gimme<any, boolean, boolean>>>(props: T) =>
-        new GimmeSearchParams(props);
+    export const search = <T extends Record<string, Gimme>>(props: T) => new GimmeSearchParams(props);
     /** Record */
-    export const rec = <T extends Gimme<any, boolean, boolean>>(values: T) => new GimmeRecord(values);
+    export const rec = <T extends Gimme>(values: T) => new GimmeRecord(values);
 
-    export type Infer<T extends Gimme<any, boolean, boolean>> = InferType<T>;
+    export type Infer<T extends Gimme | GimmeMap> = InferType<T>;
 }
 
 export default gimme;

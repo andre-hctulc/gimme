@@ -12,7 +12,7 @@ export class GimmeArray<T extends Gimme<any>> extends Gimme<InferType<T>[]> {
     protected spawn(refiner: Spawner<InferType<T>[]>): void {
         refiner((data) => {
             if (!Array.isArray(data)) throw new GimmeTypeError("Array", data);
-            data.forEach((it) => this._itemsSchema.parse(it));
+            data.forEach((it) => this._itemsSchema.p(it));
             return data;
         });
     }

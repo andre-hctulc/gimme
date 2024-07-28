@@ -3,11 +3,25 @@ import { GimmeError, GimmeTypeError } from "./error";
 type ApplyNullable<T, N extends boolean> = N extends true ? T | null : T;
 type ApplyOptional<T, O extends boolean> = O extends true ? T | undefined : T;
 
-export type InferType<T extends Gimme> = T extends Gimme<infer M, infer O, infer N>
+export type InferType<T extends Gimme | GimmeMap> = T extends Gimme<infer M, infer O, infer N>
     ? ApplyNullable<ApplyOptional<M, O>, N>
+    : // resolve map
+    T extends GimmeMap
+    ? {
+          [K in OptionalsMap<T>]?: InferType<T[K]>;
+      } & {
+          [K in Exclude<keyof T, OptionalsMap<T>>]: InferType<T[K]>;
+      }
     : never;
 
+export type GimmeMap = Record<string, Gimme>;
+
+type OptionalsMap<T extends GimmeMap> = {
+    [K in keyof T]: T[K] extends Gimme<any, infer O, any> ? (O extends true ? K : never) : never;
+}[keyof T];
+
 type RefinerOptions = EvolveOptions & { eager?: boolean };
+
 /**
  * @param skip Skips following refines when called. Can be used to prevent further refines from throwing errors. You must set `RefinerOptions.canSkip` to `true` to properly use this.
  * @throws `GimmeError`
@@ -125,9 +139,9 @@ export abstract class Gimme<T = any, O extends boolean = false, N extends boolea
         }
 
         if (!skipped && errs.length) {
-            const errColl = new GimmeError<GimmeError[]>("Parse failed", errs, true);
-            errColl.setUserMessage(this.artefacts.message);
-            return { errors: errs, data: undefined, error: errColl };
+            const errCollection = new GimmeError<GimmeError[]>("Parse failed", errs, true);
+            errCollection.setUserMessage(this.artefacts.message);
+            return { errors: errs, data: undefined, error: errCollection };
         }
 
         return { errors: null, data: refinedData as T, error: null };
@@ -139,20 +153,22 @@ export abstract class Gimme<T = any, O extends boolean = false, N extends boolea
         else return [];
     }
 
-    parse(data: unknown): T {
+    /** Shortcut for `parse` */
+    p = (data: unknown) => {
         const safe = this.parseSafe(data);
         if (safe.error) throw safe.error;
-        else return safe.data;
-    }
+        else return safe.data as T;
+    };
+
+    parse = (data: unknown) => {
+        const safe = this.parseSafe(data);
+        if (safe.error) throw safe.error;
+        else return safe.data as T;
+    };
 
     ok(data: any): boolean {
         return !this.parseSafe(data).errors?.length;
     }
-
-    /** Preserves the _this_ context, other than `parse`. You can pass `Gimme.v` as independent function. */
-    v = (data: unknown) => {
-        return this.parse(data);
-    };
 
     nullable(): Gimme<T, O, true> {
         return this.refine(
@@ -197,7 +213,7 @@ export abstract class Gimme<T = any, O extends boolean = false, N extends boolea
         if (!this.merge) throw new Error("Cannot use 'and' with this type");
 
         return this.refine((data, c, skip, originalData) => {
-            const newValue = schema.parse(originalData);
+            const newValue = schema.p(originalData);
             return this.merge!(data, newValue);
         }) as Gimme<any, boolean, boolean>;
     }

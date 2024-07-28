@@ -17,7 +17,7 @@ export class GimmeRecord<G extends Gimme> extends Gimme<Record<string, InferType
             const keys = Object.keys(originalData);
             const data: Record<string, InferType<G>> = {};
             for (const key of keys) {
-                data[key] = this._valuesSchema.parse((originalData as any)[key]);
+                data[key] = this._valuesSchema.p((originalData as any)[key]);
             }
             return data;
         });
