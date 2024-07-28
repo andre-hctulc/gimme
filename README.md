@@ -1,6 +1,6 @@
 # gimme
 
-Schema validation library inspired from [zod](https://zod.dev/).
+Schema validation library inspired by [zod](https://zod.dev/).
 
 ## Usage
 
@@ -104,6 +104,23 @@ const user = gimme
         picture: gimme.blob().nullable(), // Make sure to use nullable instead of optional for FormData!
     })
     .parse(param);
+```
+
+`URLSearchParams`
+
+```ts
+const filter = gimme
+    .search({
+        age: gimme.num(),
+        gender: gimme.str(),
+    })
+    .parse(param);
+```
+
+`Record`
+
+```ts
+const metadata = gimme.rec(gimme.str()).parse(param);
 ```
 
 ### Infer TypeScript Types
