@@ -54,4 +54,11 @@ export class GimmeNumber<N extends number = number> extends Gimme<N> {
     enum<V extends number[]>(values: V): GimmeNumber<V[number]> {
         return this.values(values as any) as unknown as GimmeNumber<V[number]>;
     }
+
+    int() {
+        return this.refine((data) => {
+            if (!Number.isInteger(data)) throw new GimmeTypeError("integer", data);
+            return data as N;
+        });
+    }
 }
