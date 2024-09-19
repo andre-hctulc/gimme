@@ -4,6 +4,8 @@ Schema validation library inspired by [zod](https://zod.dev/).
 
 ## Usage
 
+### Basic examples
+
 ```ts
 const Schema = gimme.str();
 
@@ -133,4 +135,21 @@ const UserSchema = gimme.obj({
 });
 
 type User = gimme.infer<typeof UserSchema>;
+```
+
+### Import Alias
+
+Use import alias
+
+```ts
+import g from "gimme";
+// or: import * as g from "gimme";
+
+const user = g
+    .obj({
+        name: g.str(),
+        age: g.num().optional(),
+        isAdmin: g.bool(),
+    })
+    .parse(param);
 ```

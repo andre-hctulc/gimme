@@ -3,6 +3,10 @@
     "version": "0.0.1",
     "description": "Schema validation library",
     "main": "dist/index.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/andre-hctulc/gimme.git"
+    },
     "scripts": {
         "build": "tsc",
         "tc": "tsc --noEmit",
