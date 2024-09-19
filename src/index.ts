@@ -12,6 +12,21 @@ import { GimmeSearchParams } from "./search-params";
 import { GimmeString } from "./string";
 import { GimmeSymbol } from "./symbol";
 
+export * from "./any";
+export * from "./array";
+export * from "./blob";
+export * from "./boolean";
+export * from "./form-data";
+export * from "./function";
+export * from "./gimme";
+export * from "./number";
+export * from "./object";
+export * from "./record";
+export * from "./search-params";
+export * from "./string";
+export * from "./symbol";
+export * from "./error";
+
 export {
     Gimme,
     GimmeAny,

@@ -20,6 +20,7 @@ type OptionalsMap<T extends GimmeMap> = {
     [K in keyof T]: T[K] extends Gimme<any, infer O, any> ? (O extends true ? K : never) : never;
 }[keyof T];
 
+type EvolveOptions = { copy?: boolean };
 type RefinerOptions = EvolveOptions & { eager?: boolean };
 
 /**
@@ -29,9 +30,7 @@ type RefinerOptions = EvolveOptions & { eager?: boolean };
 export type Refiner<T> = (data: T, coerce: boolean, skip: () => void, originalData: unknown) => T;
 export type Spawner<T> = (refiner: (originalData: unknown, coerce: boolean) => T) => void;
 
-type EvolveOptions = { copy?: boolean };
-
-export type GimmeArtefacts<T> = {
+export type GimmeArtifacts<T> = {
     message: string;
     refines: Refiner<T>[];
     eagerRefines: Refiner<T>[];
@@ -42,8 +41,8 @@ export type SafeParse<T> =
     | { data: T; errors: null; error: null }
     | { data: undefined; errors: GimmeError[]; error: GimmeError<GimmeError[]> };
 
-const emptyArtefacts = () => {
-    const empty: GimmeArtefacts<any> = {
+const emptyArtifacts = () => {
+    const empty: GimmeArtifacts<any> = {
         message: "",
         refines: [],
         eagerRefines: [],
@@ -55,11 +54,11 @@ const emptyArtefacts = () => {
 /**
  * b will overwrite a
  */
-function mergeArtefacts<T>(
-    a: Partial<GimmeArtefacts<T>> | null | undefined,
-    b: Partial<GimmeArtefacts<T>> | null | undefined
-): GimmeArtefacts<T> {
-    const empty = emptyArtefacts();
+function mergeArtifacts<T>(
+    a: Partial<GimmeArtifacts<T>> | null | undefined,
+    b: Partial<GimmeArtifacts<T>> | null | undefined
+): GimmeArtifacts<T> {
+    const empty = emptyArtifacts();
     return {
         ...empty,
         ...a,
@@ -70,12 +69,12 @@ function mergeArtefacts<T>(
 }
 
 /**
- * @template T The type that will be parsed and validated.
- * @template O Whether the type is optional.
- * @template N Whether the type is nullable.
+ * @template T The type that will be parsed and validated
+ * @template O Whether the type is optional
+ * @template N Whether the type is nullable
  * */
 export abstract class Gimme<T = any, O extends boolean = false, N extends boolean = false> {
-    protected artefacts = emptyArtefacts();
+    protected artifacts = emptyArtifacts();
     private _ctrParams: any[];
 
     constructor(...params: any) {
@@ -85,49 +84,53 @@ export abstract class Gimme<T = any, O extends boolean = false, N extends boolea
         );
     }
 
-    setArtefacts(artefacts: Partial<GimmeArtefacts<T>>) {
-        this.artefacts = mergeArtefacts({}, artefacts);
+    setArtifacts(artifacts: Partial<GimmeArtifacts<T>>) {
+        this.artifacts = mergeArtifacts({}, artifacts);
     }
 
     get isCoerce() {
-        return this.artefacts.coerce;
+        return this.artifacts.coerce;
     }
 
     protected abstract spawn(refine: Spawner<T>): void;
     protected merge?(value1: any, value2: any): any;
 
     /**
-     * @param artefacts These will be merged with the current artefacts
+     * @param artifacts These will be merged with the current artifacts
      * @returns A copy of the current Gimme instance
      */
-    evolve(artefacts: Partial<GimmeArtefacts<T>>, options: EvolveOptions = {}): typeof this {
-        const newArtefacts = mergeArtefacts(this.artefacts, artefacts);
+    private evolve(artifacts: Partial<GimmeArtifacts<T>>, options: EvolveOptions = {}): typeof this {
+        const newArtifacts = mergeArtifacts(this.artifacts, artifacts);
         if (options.copy === false) {
-            this.artefacts = newArtefacts;
+            this.artifacts = newArtifacts;
             return this;
         }
         const Ctr = this.constructor as any;
         const instance: typeof this = new Ctr(...this._ctrParams);
-        instance.setArtefacts(newArtefacts);
+        instance.setArtifacts(newArtifacts);
         return instance;
     }
 
-    refine(refiner: Refiner<T>, options: RefinerOptions = {}) {
-        const newArtefacts: Partial<GimmeArtefacts<T>> = {};
-        if (options.eager) newArtefacts.eagerRefines = [refiner];
-        else newArtefacts.refines = [refiner];
-        return this.evolve(newArtefacts, options);
+    refine(refiner: Refiner<T>, options: RefinerOptions = {}): typeof this {
+        const newArtifacts: Partial<GimmeArtifacts<T>> = {};
+        if (options.eager) newArtifacts.eagerRefines = [refiner];
+        else newArtifacts.refines = [refiner];
+        return this.evolve(newArtifacts, options);
+    }
+
+    coerce() {
+        return this.evolve({ coerce: true } as GimmeArtifacts<T>);
     }
 
     parseSafe(data: unknown, collectAllErrors = false): SafeParse<T> {
         const errs: GimmeError[] = [];
-        const refines = [...this.artefacts.eagerRefines, ...this.artefacts.refines];
+        const refines = [...this.artifacts.eagerRefines, ...this.artifacts.refines];
         let skipped = false;
         let refinedData = data;
 
         for (const refine of refines) {
             try {
-                refinedData = refine(refinedData, this.artefacts.coerce, () => (skipped = true), data);
+                refinedData = refine(refinedData, this.artifacts.coerce, () => (skipped = true), data);
                 // If a refine skipped, we don't want to continue with the rest of the refines
                 // for example if a nullable() receives null, we don't want/need to check further refines
                 if (skipped) break;
@@ -140,7 +143,7 @@ export abstract class Gimme<T = any, O extends boolean = false, N extends boolea
 
         if (!skipped && errs.length) {
             const errCollection = new GimmeError<GimmeError[]>("Parse failed", errs, true);
-            errCollection.setUserMessage(this.artefacts.message);
+            errCollection.setUserMessage(this.artifacts.message);
             return { errors: errs, data: undefined, error: errCollection };
         }
 
@@ -183,19 +186,24 @@ export abstract class Gimme<T = any, O extends boolean = false, N extends boolea
     optional(): Gimme<T, true, N> {
         return this.refine(
             (d, c, skip, od) => {
-                if (od === undefined) skip();
+                if (od === undefined) {
+                    skip();
+                    return od;
+                }
                 return od as any;
             },
             { eager: true }
         );
     }
 
-    coerce() {
-        return this.evolve({ coerce: true } as GimmeArtefacts<T>);
-    }
-
     default(value: T): Gimme<T, O, true> {
-        return this.refine((data) => (data === undefined ? value : data) as T);
+        return this.refine((data, c, skip) => {
+            if (data === undefined) {
+                skip();
+                return value;
+            }
+            return data;
+        });
     }
 
     or<S>(schema: Gimme<S>): Gimme<T | S, O, N> {
