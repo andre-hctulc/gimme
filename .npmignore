@@ -4,3 +4,4 @@ babel.config.js
 tsconfig.json
 src
 .vscode
+.DS_Store

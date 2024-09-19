@@ -12,6 +12,7 @@ const Schema = gimme.str();
 try {
     const str = Schema.parse(param);
 } catch (err) {
+    const gimmeErr = err as GimmeError;
     // Error handling
 }
 
