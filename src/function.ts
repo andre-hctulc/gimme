@@ -4,7 +4,10 @@ import { Gimme, Spawner } from "./gimme";
 export class GimmeFunc extends Gimme<Function> {
     protected spawn(refine: Spawner<Function>): void {
         refine((data) => {
-            if (typeof data !== "function") throw new GimmeTypeError("function", data);
+            if (typeof data !== "function")
+                throw new GimmeTypeError("function", GimmeTypeError.typeof(data), {
+                    userMessage: "Expected a function",
+                });
             return data as Function;
         });
     }

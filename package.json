@@ -3,6 +3,12 @@
     "version": "0.0.1",
     "description": "Schema validation library",
     "main": "dist/index.js",
+    "exports": {
+        ".": "./dist/index.js",
+        "./ajv": "./dist/json-schema-ajv.js",
+        "./json-schema": "./dist/json-schema-js1.js",
+        "./jsonschema": "./dist/json-schema-js2.js"
+    },
     "repository": {
         "type": "git",
         "url": "https://github.com/andre-hctulc/gimme.git"
@@ -20,6 +26,10 @@
         "@babel/preset-env": "^7.24.7",
         "@babel/preset-typescript": "^7.24.1",
         "@types/jest": "^29.5.12",
-        "jest": "^29.7.0"
+        "@types/json-schema": "^7.0.15",
+        "ajv": "^8.17.1",
+        "jest": "^29.7.0",
+        "json-schema": "^0.4.0",
+        "jsonschema": "^1.4.1"
     }
 }

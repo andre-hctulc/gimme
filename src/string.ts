@@ -5,35 +5,38 @@ export class GimmeString<S extends string = string> extends Gimme<S> {
     protected spawn(refine: Spawner<S>): void {
         refine((data, coerce) => {
             if (coerce) return data == null ? ("" as S) : (String(data) as S);
-            if (typeof data !== "string") throw new GimmeTypeError("string", data);
+            if (typeof data !== "string")
+                throw new GimmeTypeError("string", GimmeTypeError.typeof(data), {
+                    userMessage: "Expected text",
+                });
             return data as S;
         });
     }
 
     regex(regex: RegExp) {
         return this.refine((data) => {
-            if (!regex.test(data)) throw new GimmeError("Regex not matched");
+            if (!regex.test(data)) throw new GimmeError({ message: "Pattern not matched" });
             return data as S;
         });
     }
 
     maxLen(len: number) {
         return this.refine((data) => {
-            if (data.length > len) throw new GimmeError("Too long");
+            if (data.length > len) throw new GimmeError({ message: "The value is too long. Max: " + len });
             return data as S;
         });
     }
 
     minLen(len: number) {
         return this.refine((data) => {
-            if (data.length < len) throw new GimmeError("Too short");
+            if (data.length < len) throw new GimmeError({ message: "The value is too short. Min: " + len });
             return data as S;
         });
     }
 
     len(len: number) {
         return this.refine((data) => {
-            if (data.length !== len) throw new GimmeError("Length mismatch");
+            if (data.length !== len) throw new GimmeError({ message: "Expected length " + len });
             return data;
         });
     }
@@ -41,14 +44,15 @@ export class GimmeString<S extends string = string> extends Gimme<S> {
     email() {
         return this.refine((data) => {
             if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(data as string))
-                throw new GimmeError("Not an email");
+                throw new GimmeError({ message: "Not an email" });
             return data as S;
         });
     }
 
     url() {
         return this.refine((data) => {
-            if (!/^(http|https):\/\/[^ "]+$/.test(data as string)) throw new GimmeError("Not an URL");
+            if (!/^(http|https):\/\/[^ "]+$/.test(data as string))
+                throw new GimmeError({ message: "Not an URL" });
             return data;
         });
     }
@@ -56,7 +60,7 @@ export class GimmeString<S extends string = string> extends Gimme<S> {
     /** prefix */
     pre(prefix: string) {
         return this.refine((data) => {
-            if (!data.startsWith(prefix)) throw new GimmeError("Does not start with prefix");
+            if (!data.startsWith(prefix)) throw new GimmeError({ message: "Expected prefix " + prefix });
             return data;
         });
     }
@@ -64,7 +68,7 @@ export class GimmeString<S extends string = string> extends Gimme<S> {
     /** suffix */
     suff(suffix: string) {
         return this.refine((data) => {
-            if (!data.endsWith(suffix)) throw new GimmeError("Does not end with suffix");
+            if (!data.endsWith(suffix)) throw new GimmeError({ message: "Expected suffix " + suffix });
             return data;
         });
     }

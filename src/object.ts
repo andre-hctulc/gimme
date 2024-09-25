@@ -1,4 +1,4 @@
-import { GimmeTypeError } from "./error";
+import { GimmeTypeError, GimmeError } from "./error";
 import { Gimme, GimmeMap, InferType, Spawner } from "./gimme";
 
 export class GimmeObject<T extends GimmeMap> extends Gimme<InferType<T>> {
@@ -12,14 +12,20 @@ export class GimmeObject<T extends GimmeMap> extends Gimme<InferType<T>> {
     protected spawn(refine: Spawner<InferType<T>>): void {
         refine((data, coerce) => {
             if (!data || typeof data !== "object" || Array.isArray(data))
-                throw new GimmeTypeError("object", data);
+                throw new GimmeTypeError("object", GimmeTypeError.typeof(data), {
+                    userMessage: "Expected an object",
+                });
             const newData = {} as any;
             // validate props
             for (const key in this._propsSchema) {
                 // validate field
-                const parsedData = this._propsSchema[key].p((data as any)[key]);
-                // Only set keys if explicitly defined in data
-                if (key in data) newData[key] = parsedData;
+                try {
+                    const parsedData = this._propsSchema[key].p((data as any)[key]);
+                    // Only set keys if explicitly defined in data
+                    if (key in data) newData[key] = parsedData;
+                } catch (e) {
+                    throw GimmeError.toFieldError(e, key);
+                }
             }
             return newData as any;
         });

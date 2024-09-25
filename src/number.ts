@@ -1,4 +1,4 @@
-import { GimmeTypeError } from "./error";
+import { GimmeError, GimmeTypeError } from "./error";
 import { Gimme, Spawner } from "./gimme";
 
 export class GimmeNumber<N extends number = number> extends Gimme<N> {
@@ -9,25 +9,31 @@ export class GimmeNumber<N extends number = number> extends Gimme<N> {
 
             if (coerce) {
                 const coerced = Number(data);
-                if (isNaN(coerced)) throw new GimmeTypeError("number", data);
+                if (isNaN(coerced))
+                    throw new GimmeTypeError("number", GimmeTypeError.typeof(data), {
+                        userMessage: "Not a number",
+                    });
                 return coerced as N;
             }
 
-            if (typeof data !== "number") throw new GimmeTypeError("number", data);
+            if (typeof data !== "number") throw new GimmeTypeError("number", GimmeTypeError.typeof(data));
             return data as N;
         });
     }
 
     max(max: number) {
         return this.refine((data) => {
-            if (data > max) throw new GimmeTypeError(`number <= ${max}`, data);
+            if (data > max) throw new GimmeError({ message: "Too large, Max: " + max });
             return data as N;
         });
     }
 
     min(min: number) {
         return this.refine((data) => {
-            if (data < min) throw new GimmeTypeError(`number >= ${min}`, data);
+            if (data < min)
+                throw new GimmeError({
+                    message: "Too small, Min: " + min,
+                });
             return data as N;
         });
     }
@@ -57,7 +63,10 @@ export class GimmeNumber<N extends number = number> extends Gimme<N> {
 
     int() {
         return this.refine((data) => {
-            if (!Number.isInteger(data)) throw new GimmeTypeError("integer", data);
+            if (!Number.isInteger(data))
+                throw new GimmeTypeError("integer", GimmeTypeError.typeof(data), {
+                    userMessage: "Not an integer",
+                });
             return data as N;
         });
     }

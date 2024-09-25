@@ -11,6 +11,7 @@ import { GimmeRecord } from "./record";
 import { GimmeSearchParams } from "./search-params";
 import { GimmeString } from "./string";
 import { GimmeSymbol } from "./symbol";
+import { GimmeJSONSchema, JSONValue, SchemaValidator } from "./json-schema";
 
 export * from "./any";
 export * from "./array";
@@ -26,6 +27,7 @@ export * from "./search-params";
 export * from "./string";
 export * from "./symbol";
 export * from "./error";
+export * from "./json-schema";
 
 export {
     Gimme,
@@ -66,6 +68,17 @@ namespace gimme {
     export const search = <T extends Record<string, Gimme>>(props: T) => new GimmeSearchParams(props);
     /** Record */
     export const rec = <T extends Gimme>(values: T) => new GimmeRecord(values);
+    /**
+     * JSON Schema
+     *
+     * Use `gimme/ajv`, `gimme/json-schema` or `gimme/jsonschema` for default implementations.
+     *
+     * The dependencies are **not** included.
+     * */
+    export const jsonSchema = <T extends JSONValue>(
+        schema: string | object,
+        schemaValidator: SchemaValidator
+    ) => new GimmeJSONSchema<T>(schema, schemaValidator);
 
     export type Infer<T extends Gimme | GimmeMap> = InferType<T>;
 }

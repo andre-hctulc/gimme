@@ -1,4 +1,4 @@
-import { GimmeError, GimmeTypeError } from "./error";
+import { GimmeError } from "./error";
 
 type ApplyNullable<T, N extends boolean> = N extends true ? T | null : T;
 type ApplyOptional<T, O extends boolean> = O extends true ? T | undefined : T;
@@ -31,7 +31,6 @@ export type Refiner<T> = (data: T, coerce: boolean, skip: () => void, originalDa
 export type Spawner<T> = (refiner: (originalData: unknown, coerce: boolean) => T) => void;
 
 export type GimmeArtifacts<T> = {
-    message: string;
     refines: Refiner<T>[];
     eagerRefines: Refiner<T>[];
     coerce: boolean;
@@ -43,7 +42,6 @@ export type SafeParse<T> =
 
 const emptyArtifacts = () => {
     const empty: GimmeArtifacts<any> = {
-        message: "",
         refines: [],
         eagerRefines: [],
         coerce: false,
@@ -136,14 +134,17 @@ export abstract class Gimme<T = any, O extends boolean = false, N extends boolea
                 if (skipped) break;
             } catch (err) {
                 if (err instanceof GimmeError) errs.push(err);
-                else errs.push(new GimmeError("Unknown error", err));
+                else errs.push(new GimmeError({ message: "Unknown error", cause: err }));
                 if (!collectAllErrors) break;
             }
         }
 
         if (!skipped && errs.length) {
-            const errCollection = new GimmeError<GimmeError[]>("Parse failed", errs, true);
-            errCollection.setUserMessage(this.artifacts.message);
+            const errCollection = new GimmeError<GimmeError[]>({
+                message: "Parse failed",
+                collection: true,
+                cause: errs,
+            });
             return { errors: errs, data: undefined, error: errCollection };
         }
 
@@ -232,7 +233,7 @@ export abstract class Gimme<T = any, O extends boolean = false, N extends boolea
 
     literal(value: T) {
         return this.refine((data, c, skip) => {
-            if (data !== value) throw new GimmeTypeError(value, data);
+            if (data !== value) throw new GimmeError({ message: "Value not allowed" });
             return data as T;
         });
     }
@@ -240,15 +241,15 @@ export abstract class Gimme<T = any, O extends boolean = false, N extends boolea
     values(values: Iterable<T>) {
         const set = new Set(values);
         return this.refine((data, c, skip) => {
-            if (!set.has(data as T)) throw new GimmeError("Value not in list");
+            if (!set.has(data as T)) throw new GimmeError({ message: "Value not allowed" });
             return data as T;
         });
     }
 
-    forbidden(values: T[]) {
+    forbid(values: T[]) {
         const set = new Set(values);
         return this.refine((data, c, skip) => {
-            if (set.has(data as T)) throw new GimmeError("Got forbidden value");
+            if (set.has(data as T)) throw new GimmeError({ message: "Value forbidden" });
             return data as T;
         });
     }

@@ -1,4 +1,4 @@
-import { GimmeTypeError } from "./error";
+import { GimmeError, GimmeTypeError } from "./error";
 import { Gimme, InferType, Spawner } from "./gimme";
 
 export class GimmeRecord<G extends Gimme> extends Gimme<Record<string, InferType<G>>> {
@@ -12,13 +12,21 @@ export class GimmeRecord<G extends Gimme> extends Gimme<Record<string, InferType
     protected spawn(refine: Spawner<Record<string, InferType<G>>>): void {
         refine((originalData) => {
             if (typeof originalData !== "object" || originalData === null) {
-                throw new GimmeTypeError("object", originalData);
+                throw new GimmeTypeError("object", GimmeTypeError.typeof(originalData), {
+                    userMessage: "Expected an object",
+                });
             }
             const keys = Object.keys(originalData);
             const data: Record<string, InferType<G>> = {};
+
             for (const key of keys) {
-                data[key] = this._valuesSchema.p((originalData as any)[key]);
+                try {
+                    data[key] = this._valuesSchema.p((originalData as any)[key]);
+                } catch (e) {
+                    throw GimmeError.toFieldError(e, key);
+                }
             }
+
             return data;
         });
     }

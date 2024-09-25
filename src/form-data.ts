@@ -1,4 +1,4 @@
-import { GimmeTypeError } from "./error";
+import { GimmeError, GimmeTypeError } from "./error";
 import { Gimme, GimmeMap, Spawner } from "./gimme";
 
 export class GimmeFormData<T extends GimmeMap> extends Gimme<FormData> {
@@ -11,16 +11,26 @@ export class GimmeFormData<T extends GimmeMap> extends Gimme<FormData> {
 
     protected spawn(refine: Spawner<FormData>): void {
         refine((data, coerce) => {
-            if (!(data instanceof FormData)) throw new GimmeTypeError("FormData", data);
+            if (!(data instanceof FormData))
+                throw new GimmeTypeError("FormData", GimmeTypeError.typeof(data), {
+                    userMessage: "Invalid form data",
+                });
             const newFd = new FormData();
             // validate props (We have to look at all entries of a single key!)
             for (const key in this._entriesSchema) {
                 const entries = data.getAll(key);
-                let values = entries.map((val, i) => {
-                    const v = this._entriesSchema[key].p(val);
-                    return v;
-                });
-                if (!values.length) values = [this._entriesSchema[key].p(null)];
+                let values: any[];
+
+                try {
+                    values = entries.map((val, i) => {
+                        return this._entriesSchema[key].p(val);
+                    });
+
+                    if (!values.length) values = [this._entriesSchema[key].p(null)];
+                } catch (e) {
+                    throw GimmeError.toFieldError(e, key);
+                }
+
                 // Only set keys if explicitly defined in data
                 if (data.has(key)) {
                     values.forEach((entry) => newFd.append(key, entry));

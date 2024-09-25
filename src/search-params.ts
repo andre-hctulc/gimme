@@ -1,4 +1,4 @@
-import { GimmeTypeError } from "./error";
+import { GimmeError, GimmeTypeError } from "./error";
 import { Gimme, GimmeMap, Spawner } from "./gimme";
 
 export class GimmeSearchParams<T extends GimmeMap> extends Gimme<URLSearchParams> {
@@ -14,16 +14,27 @@ export class GimmeSearchParams<T extends GimmeMap> extends Gimme<URLSearchParams
             if (coerce && data && typeof data === "object" && !Array.isArray(data)) {
                 data = new URLSearchParams(data as Record<string, any>);
             }
-            if (!(data instanceof URLSearchParams)) throw new GimmeTypeError("URLSearchParams", data);
+            if (!(data instanceof URLSearchParams))
+                throw new GimmeTypeError("URLSearchParams", GimmeTypeError.typeof(data), {
+                    userMessage: "Expected search parameters",
+                });
             const newParams = new URLSearchParams();
             // validate props (We have to look at all entries of a single key!)
             for (const key in this._paramsSchema) {
                 const entries = data.getAll(key);
-                let values = entries.map((val, i) => {
-                    const v = this._paramsSchema[key].p(val);
-                    return v;
-                });
-                if (!values.length) values = [this._paramsSchema[key].p(null)];
+
+                let values: any[];
+
+                try {
+                    values = entries.map((val, i) => {
+                        return this._paramsSchema[key].p(val);
+                    });
+
+                    if (!values.length) values = [this._paramsSchema[key].p(null)];
+                } catch (e) {
+                    throw GimmeError.toFieldError(e, key);
+                }
+
                 // Only set keys if explicitly defined in data
                 if (data.has(key)) {
                     values.forEach((entry) => newParams.append(key, entry));
