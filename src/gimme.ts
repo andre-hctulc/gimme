@@ -1,10 +1,7 @@
 import { GimmeError } from "./error";
 
-type ApplyNullable<T, N extends boolean> = N extends true ? T | null : T;
-type ApplyOptional<T, O extends boolean> = O extends true ? T | undefined : T;
-
-export type InferType<T extends Gimme | GimmeMap> = T extends Gimme<infer M, infer O, infer N>
-    ? ApplyNullable<ApplyOptional<M, O>, N>
+export type InferType<T extends Gimme | GimmeMap> = T extends Gimme<infer M>
+    ? M
     : // resolve map
     T extends GimmeMap
     ? {
@@ -17,7 +14,7 @@ export type InferType<T extends Gimme | GimmeMap> = T extends Gimme<infer M, inf
 export type GimmeMap = Record<string, Gimme>;
 
 type OptionalsMap<T extends GimmeMap> = {
-    [K in keyof T]: T[K] extends Gimme<any, infer O, any> ? (O extends true ? K : never) : never;
+    [K in keyof T]: T[K] extends Gimme<infer T> ? (undefined extends T ? K : never) : never;
 }[keyof T];
 
 type EvolveOptions = { copy?: boolean };
@@ -71,7 +68,7 @@ function mergeArtifacts<T>(
  * @template O Whether the type is optional
  * @template N Whether the type is nullable
  * */
-export abstract class Gimme<T = any, O extends boolean = false, N extends boolean = false> {
+export abstract class Gimme<T = any /* , O extends boolean = false, N extends boolean = false */> {
     protected artifacts = emptyArtifacts();
     private _ctrParams: any[];
 
@@ -174,17 +171,17 @@ export abstract class Gimme<T = any, O extends boolean = false, N extends boolea
         return !this.parseSafe(data).errors?.length;
     }
 
-    nullable(): Gimme<T, O, true> {
+    nullable(): Gimme<T | null> {
         return this.refine(
             (d, c, skip, od) => {
                 if (od === null) skip();
                 return od as T;
             },
             { eager: true }
-        );
+        ) as Gimme<T | null>;
     }
 
-    optional(): Gimme<T, true, N> {
+    optional(): Gimme<T | undefined> {
         return this.refine(
             (d, c, skip, od) => {
                 if (od === undefined) {
@@ -194,7 +191,7 @@ export abstract class Gimme<T = any, O extends boolean = false, N extends boolea
                 return od as any;
             },
             { eager: true }
-        );
+        ) as Gimme<T | undefined>;
     }
 
     default(value: T, mapNull = false) {
@@ -207,7 +204,7 @@ export abstract class Gimme<T = any, O extends boolean = false, N extends boolea
         });
     }
 
-    or<S>(schema: Gimme<S>): Gimme<T | S, O, N> {
+    or<S>(schema: Gimme<S>): Gimme<T | S> {
         return this.refine(
             (data, c, skip, originalData) => {
                 const { error, data: d } = schema.parseSafe(originalData);
@@ -215,16 +212,16 @@ export abstract class Gimme<T = any, O extends boolean = false, N extends boolea
                 return data as T;
             },
             { eager: true }
-        ) as Gimme<any, boolean, boolean>;
+        ) as Gimme<any>;
     }
 
-    and<S>(schema: Gimme<S>): Gimme<T & S, O, N> {
+    and<S>(schema: Gimme<S>): Gimme<T & S> {
         if (!this.merge) throw new Error("Cannot use 'and' with this type");
 
         return this.refine((data, c, skip, originalData) => {
             const newValue = schema.p(originalData);
             return this.merge!(data, newValue);
-        }) as Gimme<any, boolean, boolean>;
+        }) as Gimme<any>;
     }
 
     message(message: string) {
