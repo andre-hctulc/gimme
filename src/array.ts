@@ -2,9 +2,9 @@ import { GimmeError, GimmeTypeError } from "./error";
 import { Gimme, InferType, Spawner } from "./gimme";
 
 export class GimmeArray<T extends Gimme<any>> extends Gimme<InferType<T>[]> {
-    private _itemsSchema: Gimme<InferType<T>, boolean, boolean>;
+    private _itemsSchema: Gimme<InferType<T>>;
 
-    constructor(items: Gimme<InferType<T>, boolean, boolean>) {
+    constructor(items: Gimme<InferType<T>>) {
         super(items);
         this._itemsSchema = items;
     }
