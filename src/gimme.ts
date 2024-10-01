@@ -197,9 +197,9 @@ export abstract class Gimme<T = any, O extends boolean = false, N extends boolea
         );
     }
 
-    default(value: T): Gimme<T, O, true> {
+    default(value: T, mapNull = false) {
         return this.refine((data, c, skip) => {
-            if (data === undefined) {
+            if (data === undefined || (mapNull && data === null)) {
                 skip();
                 return value;
             }
