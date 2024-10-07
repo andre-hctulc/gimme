@@ -35,7 +35,15 @@ export type GimmeArtifacts<T> = {
 
 export type SafeParse<T> =
     | { data: T; errors: null; error: null }
-    | { data: undefined; errors: GimmeError[]; error: GimmeError<GimmeError[]> };
+    | {
+          data: undefined;
+          errors: GimmeError[];
+          /**
+           * When `collectAllErrors` is `true`, this will be a `GimmeError` with all errors as cause,
+           * otherwise, it will be the first error.
+           * */
+          error: GimmeError;
+      };
 
 const emptyArtifacts = () => {
     const empty: GimmeArtifacts<any> = {
@@ -114,7 +122,7 @@ export abstract class Gimme<T = any /* , O extends boolean = false, N extends bo
     }
 
     coerce() {
-        return this.evolve({ coerce: true } as GimmeArtifacts<T>);
+        return this.evolve({ coerce: true });
     }
 
     parseSafe(data: unknown, collectAllErrors = false): SafeParse<T> {
@@ -137,12 +145,10 @@ export abstract class Gimme<T = any /* , O extends boolean = false, N extends bo
         }
 
         if (!skipped && errs.length) {
-            const errCollection = new GimmeError<GimmeError[]>({
-                message: "Parse failed",
-                collection: true,
-                cause: errs,
-            });
-            return { errors: errs, data: undefined, error: errCollection };
+            const masterError = collectAllErrors
+                ? new GimmeError({ message: "Parse failed", cause: errs })
+                : errs[0];
+            return { errors: errs, data: undefined, error: masterError };
         }
 
         return { errors: null, data: refinedData as T, error: null };
