@@ -21,7 +21,7 @@
         "test:verbose": "jest --silent=false"
     },
     "author": "André Thomas",
-    "license": "ISC",
+    "license": "MIT",
     "devDependencies": {
         "@babel/preset-env": "^7.24.7",
         "@babel/preset-typescript": "^7.24.1",

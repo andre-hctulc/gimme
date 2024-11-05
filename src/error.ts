@@ -3,7 +3,7 @@ export interface GimmeErrorInit<C = unknown> {
     /**
      * User-friendly message
      *
-     * Defaults to the message if not set
+     * Defaults to the error message.
      */
     userMessage?: string;
     cause?: C;
@@ -12,11 +12,18 @@ export interface GimmeErrorInit<C = unknown> {
 
 export class GimmeError<C = unknown> extends Error {
     constructor(private init: GimmeErrorInit<C>) {
-        super("Gimme validation error: " + init.message);
+        super(GimmeError.msg(init.message));
     }
 
+    private static msg(message: string, field: string | null = null, user = false) {
+        return `${user ? "Gimme Error" : "Error"}${field ? ` in field "${field}"` : ""}: ${message}`;
+    }
+
+    /**
+     * The error message for the user. Defaults to the message.
+     */
     get userMessage(): string {
-        return this.init.userMessage ?? this.message;
+        return this.init.userMessage ?? GimmeError.msg(this.init.message, this._field, true);
     }
 
     get cause(): unknown {
@@ -31,6 +38,7 @@ export class GimmeError<C = unknown> extends Error {
 
     ofField(fieldName: string) {
         this._field = fieldName;
+        this.message = GimmeError.msg(this.init.message, fieldName);
         return this;
     }
 
@@ -57,7 +65,7 @@ export class GimmeError<C = unknown> extends Error {
 
         return new GimmeError({
             message: error instanceof Error ? error.message : "Unknown error",
-            userMessage: "Error parsing field " + fieldName,
+            userMessage: "Unknown error",
             cause: error,
         }).ofField(fieldName);
     }
@@ -74,8 +82,8 @@ export class GimmeTypeError extends GimmeError {
 
     constructor(readonly expected: string, readonly got: string, errorOptions?: Partial<GimmeErrorInit>) {
         super({
-            message: "Invalid type: expected " + expected + ", got " + got,
-            userMessage: "Invalid type: expected " + expected,
+            message: "Invalid type received. Expected " + expected + ", got " + got,
+            userMessage: "Invalid type. Expected " + expected,
             ...errorOptions,
         });
     }
