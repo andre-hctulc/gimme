@@ -70,6 +70,12 @@ type ApplyNullable<S, T> = null extends S ? T | null : T;
  */
 type ApplyOptional<S, T> = undefined extends S ? T | undefined : T;
 
+/**
+ * @template S The source type
+ * @template T The target type
+ */
+type Apply<S, T> = ApplyOptional<S, ApplyNullable<S, T>>;
+
 const emptyArtifacts = () => {
     const empty: GimmeArtifacts<any> = {
         evolutions: [],
@@ -166,7 +172,7 @@ export abstract class Gimme<T = any /* , O extends boolean = false, N extends bo
      * @param transformer The function that will transform the data
      * @param GimmeCtr The schema class for the transformed data
      */
-    transform<O>(transformer: Transformer<T, O>, GimmeCtr: GimmeCtr<O>): Gimme<O> {
+    transform<O>(transformer: Transformer<T, O>, GimmeCtr: GimmeCtr<O>): Gimme<Apply<T, O>> {
         const newArtifacts: Partial<GimmeArtifacts<T>> = {};
         newArtifacts.evolutions = [transformer];
         return this.evolve(newArtifacts, {}, GimmeCtr) as any;
