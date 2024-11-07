@@ -12,6 +12,8 @@ import { GimmeSearchParams } from "./search-params";
 import { GimmeString } from "./string";
 import { GimmeSymbol } from "./symbol";
 import { GimmeJSONSchema, JSONValue, SchemaValidator } from "./json-schema";
+import { GimmeUndefined } from "./undefined";
+import { GimmeNull } from "./null";
 
 export * from "./any";
 export * from "./array";
@@ -68,6 +70,10 @@ namespace gimme {
     export const search = <T extends Record<string, Gimme>>(props: T) => new GimmeSearchParams(props);
     /** Record */
     export const rec = <T extends Gimme>(values: T) => new GimmeRecord(values);
+    /** undefined */
+    export const undef = () => new GimmeUndefined();
+    /** null */
+    export const nul = () => new GimmeNull();
     /**
      * JSON Schema
      *

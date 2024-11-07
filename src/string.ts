@@ -1,37 +1,37 @@
 import { GimmeArray } from "./array";
 import { GimmeError, GimmeTypeError } from "./error";
-import { Gimme, InferType, Spawner } from "./gimme";
+import { Gimme, Spawner } from "./gimme";
 
-export class GimmeString<S extends string = string> extends Gimme<S> {
-    protected spawn(refine: Spawner<S>): void {
+export class GimmeString<T extends string = string> extends Gimme<T> {
+    protected spawn(refine: Spawner<T>): void {
         refine((data, coerce) => {
-            if (coerce) return data == null ? ("" as S) : (String(data) as S);
+            if (coerce) return data == null ? ("" as T) : (String(data) as T);
             if (typeof data !== "string")
                 throw new GimmeTypeError("string", GimmeTypeError.typeof(data), {
                     userMessage: "Expected text",
                 });
-            return data as S;
+            return data as T;
         });
     }
 
     regex(regex: RegExp) {
         return this.refine((data) => {
             if (!regex.test(data)) throw new GimmeError({ message: "Pattern not matched" });
-            return data as S;
+            return data as T;
         });
     }
 
     maxLen(len: number) {
         return this.refine((data) => {
             if (data.length > len) throw new GimmeError({ message: "The value is too long. Max: " + len });
-            return data as S;
+            return data as T;
         });
     }
 
     minLen(len: number) {
         return this.refine((data) => {
             if (data.length < len) throw new GimmeError({ message: "The value is too short. Min: " + len });
-            return data as S;
+            return data as T;
         });
     }
 
@@ -46,7 +46,7 @@ export class GimmeString<S extends string = string> extends Gimme<S> {
         return this.refine((data) => {
             if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(data as string))
                 throw new GimmeError({ message: "Not an email" });
-            return data as S;
+            return data as T;
         });
     }
 
@@ -99,16 +99,16 @@ export class GimmeString<S extends string = string> extends Gimme<S> {
         });
     }
 
-    split(separator: string, itemSchema?: Gimme<string>): GimmeArray<GimmeString> {
+    split(separator: string, itemSchema?: Gimme<string>) {
         return this.transform<string[]>(
             (data) => {
                 return (data as string).split(separator);
             },
-            new (class extends GimmeArray<GimmeString> {
-                constructor(...params: any) {
+            class extends GimmeArray<GimmeString> {
+                constructor() {
                     super(itemSchema || new GimmeString());
                 }
-            })() as any
-        ) as GimmeArray<GimmeString>;
+            }
+        );
     }
 }

@@ -13,7 +13,11 @@ export type InferType<T extends Gimme | GimmeMap> = T extends Gimme<infer M>
 
 export type GimmeMap = Record<string, Gimme>;
 
-type GimmeCtr<T = any> = new (...params: any) => Gimme<T>;
+type GimmeCtr<T = any> = T extends Gimme ? new (...params: any) => T : new (...params: any) => Gimme<T>;
+
+export type GimmeClassSpec<T extends Gimme> = Omit<T, "parse" | "p" | "parseSafe">;
+export type GimmeClassBody<T extends Gimme> = Pick<T, "parse" | "p" | "parseSafe">;
+export type GimmeMerge<S, G extends Gimme> = Pick<Gimme<S>, keyof Gimme> & Omit<G, keyof Gimme>;
 
 type OptionalsMap<T extends GimmeMap> = {
     [K in keyof T]: T[K] extends Gimme<infer T> ? (undefined extends T ? K : never) : never;
@@ -53,6 +57,18 @@ export type SafeParse<T> =
            * */
           error: GimmeError;
       };
+
+/**
+ * @template S The source type
+ * @template S The target type
+ */
+type ApplyNullable<S, T> = null extends S ? T | null : T;
+
+/**
+ * @template S The source type
+ * @template T The target type
+ */
+type ApplyOptional<S, T> = undefined extends S ? T | undefined : T;
 
 const emptyArtifacts = () => {
     const empty: GimmeArtifacts<any> = {
@@ -153,7 +169,7 @@ export abstract class Gimme<T = any /* , O extends boolean = false, N extends bo
     transform<O>(transformer: Transformer<T, O>, GimmeCtr: GimmeCtr<O>): Gimme<O> {
         const newArtifacts: Partial<GimmeArtifacts<T>> = {};
         newArtifacts.evolutions = [transformer];
-        return this.evolve(newArtifacts, {}, GimmeCtr);
+        return this.evolve(newArtifacts, {}, GimmeCtr) as any;
     }
 
     parseSafe(data: unknown, collectAllErrors = false): SafeParse<T> {
@@ -215,7 +231,7 @@ export abstract class Gimme<T = any /* , O extends boolean = false, N extends bo
                 return od as T;
             },
             { eager: true }
-        ) as Gimme<T | null>;
+        ) as any;
     }
 
     optional(): Gimme<T | undefined> {
@@ -228,7 +244,7 @@ export abstract class Gimme<T = any /* , O extends boolean = false, N extends bo
                 return od as any;
             },
             { eager: true }
-        ) as Gimme<T | undefined>;
+        ) as any;
     }
 
     default(value: T, mapNull = false) {
@@ -286,5 +302,18 @@ export abstract class Gimme<T = any /* , O extends boolean = false, N extends bo
             if (set.has(data as T)) throw new GimmeError({ message: "Value forbidden" });
             return data as T;
         });
+    }
+
+    /**
+     * Use this to specify the
+     * @param copy Whether to create a new instance or mutate the current one
+     */
+    as<G extends Gimme<T | Exclude<T, undefined | null>>>(copy = false): GimmeMerge<T, G> {
+        if (copy) return this.copy() as any;
+        return this as any;
+    }
+
+    copy() {
+        return this.evolve({});
     }
 }
