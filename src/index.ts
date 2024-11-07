@@ -30,6 +30,8 @@ export * from "./string";
 export * from "./symbol";
 export * from "./error";
 export * from "./json-schema";
+export * from "./null";
+export * from "./undefined";
 
 export {
     Gimme,
