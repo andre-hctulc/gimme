@@ -1,5 +1,9 @@
+import { GimmeAny } from "./any";
 import { GimmeError, GimmeTypeError } from "./error";
 import { Gimme, GimmeMap, Spawner } from "./gimme";
+import { GimmeObject } from "./object";
+import { GimmeRecord } from "./record";
+import { GimmeString } from "./string";
 
 export class GimmeSearchParams<T extends GimmeMap> extends Gimme<URLSearchParams> {
     private _paramsSchema: T;
@@ -62,5 +66,33 @@ export class GimmeSearchParams<T extends GimmeMap> extends Gimme<URLSearchParams
         const newParams = new URLSearchParams(value1);
         Array.from(value2.entries()).forEach(([key, val]) => newParams.append(key, val));
         return newParams;
+    }
+
+    /**
+     * @returns `GimmeRecord<string>`
+     */
+    rec(values?: Gimme<string>) {
+        return this.transform<Record<string, string>>(
+            (search) => Object.fromEntries(search.entries()),
+            class extends GimmeRecord<Gimme<string>> {
+                constructor() {
+                    super(values || new GimmeString());
+                }
+            }
+        );
+    }
+
+    /**
+     * @returns `GimmeObject<P>`
+     */
+    obj<P extends GimmeMap<Gimme<string>>>(props: P) {
+        return this.transform<Record<string, string>>(
+            (search) => Object.fromEntries(search.entries()),
+            class extends GimmeObject<P> {
+                constructor() {
+                    super(props);
+                }
+            } as any
+        );
     }
 }

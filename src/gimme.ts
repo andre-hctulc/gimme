@@ -11,7 +11,7 @@ export type InferType<T extends Gimme | GimmeMap> = T extends Gimme<infer M>
       }
     : never;
 
-export type GimmeMap = Record<string, Gimme>;
+export type GimmeMap<G extends Gimme = Gimme> = Record<string, G>;
 
 type GimmeCtr<T = any> = T extends Gimme ? new (...params: any) => T : new (...params: any) => Gimme<T>;
 

@@ -1,5 +1,8 @@
+import { GimmeAny } from "./any";
 import { GimmeError, GimmeTypeError } from "./error";
-import { Gimme, GimmeMap, Spawner } from "./gimme";
+import { Gimme, GimmeMap, InferType, Spawner } from "./gimme";
+import { GimmeObject } from "./object";
+import { GimmeRecord } from "./record";
 
 export class GimmeFormData<T extends GimmeMap> extends Gimme<FormData> {
     private _entriesSchema: T;
@@ -75,5 +78,33 @@ export class GimmeFormData<T extends GimmeMap> extends Gimme<FormData> {
             if (keys.length > 1) throw new Error("Too many entries not null");
             return data;
         });
+    }
+
+    /**
+     * @returns `GimmeRecord<FormDataEntryValue>`
+     */
+    rec(values?: Gimme<FormDataEntryValue>) {
+        return this.transform<Record<string, FormDataEntryValue>>(
+            (formData) => Object.fromEntries(formData.entries()),
+            class extends GimmeRecord<Gimme<FormDataEntryValue>> {
+                constructor() {
+                    super(values || new GimmeAny());
+                }
+            }
+        );
+    }
+
+    /**
+     * @returns `GimmeObject<P>`
+     */
+    obj<P extends GimmeMap<Gimme<FormDataEntryValue>>>(props: P) {
+        return this.transform<InferType<P>>(
+            (search) => Object.fromEntries(search.entries()) as any,
+            class extends GimmeObject<P> {
+                constructor() {
+                    super(props);
+                }
+            } as any
+        );
     }
 }

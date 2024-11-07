@@ -1,15 +1,15 @@
 import { GimmeTypeError, GimmeError } from "./error";
 import { Gimme, GimmeMap, InferType, Spawner } from "./gimme";
 
-export class GimmeObject<T extends GimmeMap> extends Gimme<InferType<T>> {
-    private _propsSchema: T;
+export class GimmeObject<P extends GimmeMap> extends Gimme<InferType<P>> {
+    private _propsSchema: P;
 
-    constructor(props: T) {
+    constructor(props: P) {
         super(props);
         this._propsSchema = props;
     }
 
-    protected spawn(refine: Spawner<InferType<T>>): void {
+    protected spawn(refine: Spawner<InferType<P>>): void {
         refine((data, coerce) => {
             if (!data || typeof data !== "object" || Array.isArray(data))
                 throw new GimmeTypeError("object", GimmeTypeError.typeof(data), {
