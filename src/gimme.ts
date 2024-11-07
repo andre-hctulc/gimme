@@ -13,11 +13,19 @@ export type InferType<T extends Gimme | GimmeMap> = T extends Gimme<infer M>
 
 export type GimmeMap = Record<string, Gimme>;
 
+type GimmeCtr<T = any> = new (...params: any) => Gimme<T>;
+
 type OptionalsMap<T extends GimmeMap> = {
     [K in keyof T]: T[K] extends Gimme<infer T> ? (undefined extends T ? K : never) : never;
 }[keyof T];
 
-type EvolveOptions = { copy?: boolean };
+type EvolveOptions = {
+    /**
+     * @default true
+     */
+    copy?: boolean;
+};
+
 type RefinerOptions = EvolveOptions & { eager?: boolean };
 
 /**
@@ -25,10 +33,11 @@ type RefinerOptions = EvolveOptions & { eager?: boolean };
  * @throws `GimmeError`
  */
 export type Refiner<T> = (data: T, coerce: boolean, skip: () => void, originalData: unknown) => T;
+export type Transformer<I, O> = (data: I, coerce: boolean) => O;
 export type Spawner<T> = (refiner: (originalData: unknown, coerce: boolean) => T) => void;
 
 export type GimmeArtifacts<T> = {
-    refines: Refiner<T>[];
+    evolutions: (Refiner<T> | Transformer<T, any>)[];
     eagerRefines: Refiner<T>[];
     coerce: boolean;
 };
@@ -47,7 +56,7 @@ export type SafeParse<T> =
 
 const emptyArtifacts = () => {
     const empty: GimmeArtifacts<any> = {
-        refines: [],
+        evolutions: [],
         eagerRefines: [],
         coerce: false,
     };
@@ -66,7 +75,7 @@ function mergeArtifacts<T>(
         ...empty,
         ...a,
         ...b,
-        refines: [...(a?.refines || []), ...(b?.refines || [])],
+        evolutions: [...(a?.evolutions || []), ...(b?.evolutions || [])],
         eagerRefines: [...(a?.eagerRefines || []), ...(b?.eagerRefines || [])],
     };
 }
@@ -102,38 +111,60 @@ export abstract class Gimme<T = any /* , O extends boolean = false, N extends bo
      * @param artifacts These will be merged with the current artifacts
      * @returns A copy of the current Gimme instance
      */
-    private evolve(artifacts: Partial<GimmeArtifacts<T>>, options: EvolveOptions = {}): typeof this {
+    private evolve(
+        artifacts: Partial<GimmeArtifacts<T>>,
+        options: EvolveOptions = {},
+        GimmeCtr?: GimmeCtr
+    ): Gimme {
+        if (!GimmeCtr) GimmeCtr = this.constructor as any;
+
+        // Merge the artifacts
         const newArtifacts = mergeArtifacts(this.artifacts, artifacts);
+
+        // return this if copy is false
         if (options.copy === false) {
             this.artifacts = newArtifacts;
             return this;
         }
-        const Ctr = this.constructor as any;
-        const instance: typeof this = new Ctr(...this._ctrParams);
+
+        // Copy the instance and set the new artifacts
+        // Only pass ctr params if the GimmeCtr is the current instance
+        const instance: Gimme = new GimmeCtr!(...(GimmeCtr === this.constructor ? this._ctrParams : []));
         instance.setArtifacts(newArtifacts);
+
         return instance;
     }
 
     refine(refiner: Refiner<T>, options: RefinerOptions = {}): typeof this {
         const newArtifacts: Partial<GimmeArtifacts<T>> = {};
         if (options.eager) newArtifacts.eagerRefines = [refiner];
-        else newArtifacts.refines = [refiner];
-        return this.evolve(newArtifacts, options);
+        else newArtifacts.evolutions = [refiner];
+        return this.evolve(newArtifacts, options) as typeof this;
     }
 
     coerce() {
         return this.evolve({ coerce: true });
     }
 
+    /**
+     * @param transformer The function that will transform the data
+     * @param GimmeCtr The schema class for the transformed data
+     */
+    transform<O>(transformer: Transformer<T, O>, GimmeCtr: GimmeCtr<O>): Gimme<O> {
+        const newArtifacts: Partial<GimmeArtifacts<T>> = {};
+        newArtifacts.evolutions = [transformer];
+        return this.evolve(newArtifacts, {}, GimmeCtr);
+    }
+
     parseSafe(data: unknown, collectAllErrors = false): SafeParse<T> {
         const errs: GimmeError[] = [];
-        const refines = [...this.artifacts.eagerRefines, ...this.artifacts.refines];
+        const evolutions = [...this.artifacts.eagerRefines, ...this.artifacts.evolutions];
         let skipped = false;
         let refinedData = data;
 
-        for (const refine of refines) {
+        for (const evolution of evolutions) {
             try {
-                refinedData = refine(refinedData, this.artifacts.coerce, () => (skipped = true), data);
+                refinedData = evolution(refinedData, this.artifacts.coerce, () => (skipped = true), data);
                 // If a refine skipped, we don't want to continue with the rest of the refines
                 // for example if a nullable() receives null, we don't want/need to check further refines
                 if (skipped) break;

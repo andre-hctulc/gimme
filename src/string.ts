@@ -1,5 +1,6 @@
+import { GimmeArray } from "./array";
 import { GimmeError, GimmeTypeError } from "./error";
-import { Gimme, Spawner } from "./gimme";
+import { Gimme, InferType, Spawner } from "./gimme";
 
 export class GimmeString<S extends string = string> extends Gimme<S> {
     protected spawn(refine: Spawner<S>): void {
@@ -96,5 +97,18 @@ export class GimmeString<S extends string = string> extends Gimme<S> {
                 throw new GimmeTypeError("UUID", data);
             return data;
         });
+    }
+
+    split(separator: string, itemSchema?: Gimme<string>): GimmeArray<GimmeString> {
+        return this.transform<string[]>(
+            (data) => {
+                return (data as string).split(separator);
+            },
+            new (class extends GimmeArray<GimmeString> {
+                constructor(...params: any) {
+                    super(itemSchema || new GimmeString());
+                }
+            })() as any
+        ) as GimmeArray<GimmeString>;
     }
 }
